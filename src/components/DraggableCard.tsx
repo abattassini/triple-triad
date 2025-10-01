@@ -24,9 +24,8 @@ export const DraggableCard: React.FC<DraggableCardProps> = ({ card, isDraggable 
       {...(isDraggable ? listeners : {})}
       {...(isDraggable ? attributes : {})}
       className={`card ${isDragging ? 'dragging' : ''} ${!isDraggable ? 'card--opponent' : ''}`}
-    >
-      <img 
-        src={`/images/cards/${card.blueImagePath}`}
+    >      <img 
+        src={`./images/cards/${card.blueImagePath}`}
         alt={card.name}
         className="card-image"
       />

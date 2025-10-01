@@ -19,9 +19,8 @@ const DroppableCell: React.FC<DroppableCellProps> = ({ index, card }) => {
       className={`board-cell ${card ? 'occupied' : 'empty'} ${isOver ? 'drop-target' : ''}`}
     >
       {card ? (
-        <div className="board-card">
-          <img 
-            src={`/images/cards/${card.blueImagePath}`} 
+        <div className="board-card">          <img 
+            src={`./images/cards/${card.blueImagePath}`} 
             alt={card.name}
             className="board-card-image"
           />

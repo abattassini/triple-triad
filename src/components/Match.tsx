@@ -150,9 +150,8 @@ export const Match: React.FC = () => {
       
       <DragOverlay>
         {activeCard ? (
-          <div className="drag-overlay-card">
-            <img 
-              src={`/images/cards/${activeCard.blueImagePath}`}
+          <div className="drag-overlay-card">            <img 
+              src={`./images/cards/${activeCard.blueImagePath}`}
               alt={activeCard.name}
               className="drag-overlay-image"
             />
