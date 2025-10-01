@@ -1,0 +1,119 @@
+.hand {
+  padding: 1rem;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);  width: 100%;
+  max-width: 700px;
+  height: 210px; // Fixed height - optimized for better spacing
+  min-height: 210px;
+
+  .hand-title {
+    color: #fff;
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }  .hand-cards {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: nowrap;
+    padding: 0.5rem;
+    overflow-x: auto;
+    height: 140px; // Increased height for card area with better spacing
+    align-items: center;
+  }
+
+  /* Opponent hand styling */
+  &.hand--opponent {
+    .hand-title {
+      color: #ff6b6b;
+    }
+
+    .hand-cards {
+      opacity: 0.8;
+    }
+  }
+
+  /* Player hand styling */
+  &.hand--player {
+    .hand-title {
+      color: #4a9eff;
+    }
+  }
+}
+
+/* Desktop layout (1200px+) - 2 Column layout */
+@media (min-width: 1200px) {
+  .hand {
+    width: 360px; // Wider for desktop screens
+    max-width: 360px;
+    min-width: 360px;
+    height: 560px; // Taller to prevent card cutoff on desktop screens
+    min-height: 560px;
+    max-height: 560px;
+    
+    .hand-title {
+      font-size: 1.2rem;
+      writing-mode: horizontal-tb;
+      margin-bottom: 1.5rem;
+    }
+
+    .hand-cards {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-content: flex-start;
+      gap: 1.2rem;
+      overflow: visible;      
+      height: 460px; // More space for cards - increased
+      padding: 0.8rem;
+    }
+  }
+}
+
+// Individual card styles are now in DraggableCard.scss
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .hand-cards {
+    gap: 0.5rem;
+  }
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 1199px) {  .hand {
+    width: 100%;
+    max-width: none; // Remove max-width constraint
+    height: 210px; // Slightly increased for better bottom spacing
+    min-height: 210px;
+    max-height: 210px;
+    margin: 0; // Remove centering margin
+    box-sizing: border-box;
+      .hand-title {
+        margin-top: 0;
+        margin-bottom: 0.2rem; // Much less space below title
+    }
+    
+    .hand-cards {
+      gap: 1rem; // Better spacing between cards
+      padding: 0.2rem 2rem 1.5rem 2rem; // Minimal top padding, more bottom padding
+      justify-content: space-evenly; // Distribute cards across full width
+      width: 100%;
+      height: 140px; // Slightly increased height for more bottom space
+      overflow: hidden; // Remove scrollbar on mobile
+      display: flex;
+      align-items: center;
+    }
+  }
+}
+
+/* Very small screens - adjust spacing */
+@media (max-width: 480px) {
+  .hand {
+    .hand-cards {
+      gap: 0.5rem; // Moderate gap on very small screens
+      padding: 0.5rem 1rem; // Reduced padding but maintain full width
+    }
+  }
+}

@@ -1,0 +1,170 @@
+// Mobile-first variables
+$card-size-mobile: 80px;
+$card-height-mobile: 110px;
+$card-size-desktop: 100px;
+$card-height-desktop: 140px;
+$board-gap: 6px;
+$primary-color: #4a9eff;
+$bg-dark: #1a1a2e;
+$bg-darker: #16213e;
+
+.board {
+  padding: 1rem;
+  background: linear-gradient(145deg, $bg-dark, $bg-darker);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  width: 300px; // Fixed width
+  min-width: 300px; // Ensure it doesn't shrink
+  margin: 0 auto; // Center the board
+  align-self: center; // Center within flex container
+
+  .board-title {
+    color: #fff;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.4rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }  .board-grid {
+    display: grid;
+    grid-template-columns: repeat(3, #{$card-size-mobile});
+    grid-template-rows: repeat(3, #{$card-height-mobile});
+    gap: $board-gap;
+    width: calc(3 * #{$card-size-mobile} + 2 * #{$board-gap});
+    height: calc(3 * #{$card-height-mobile} + 2 * #{$board-gap});
+    margin: 0 auto;
+    padding: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border: 2px solid #3a3a5e;.board-cell {
+      width: $card-size-mobile;
+      height: $card-height-mobile;
+      border: 2px solid #3a3a5e;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      background: linear-gradient(145deg, #2a2a3e, #1e1e32);
+
+      &.empty {
+        border-style: dashed;
+        border-color: #555;
+        
+        &:hover {
+          border-color: $primary-color;
+          background: rgba(74, 158, 255, 0.1);
+          transform: scale(1.02);
+        }
+
+        &.drop-target {
+          border-color: #4ade80;
+          background: rgba(74, 222, 128, 0.2);
+          transform: scale(1.05);
+          box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
+          
+          .empty-slot {
+            color: #4ade80;
+            opacity: 1;
+            transform: scale(1.2);
+          }
+        }
+
+        .empty-slot {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          color: #666;
+          font-size: 2rem;
+          font-weight: bold;
+          opacity: 0.5;
+          transition: all 0.3s ease;
+        }
+
+        &:hover .empty-slot {
+          color: $primary-color;
+          opacity: 0.8;
+        }
+      }
+
+      &.occupied {
+        border-color: $primary-color;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
+        }
+      }
+
+      // Drop target effects
+      &.drop-target {
+        border-color: #00ff88 !important;
+        background: rgba(0, 255, 136, 0.1) !important;
+        transform: scale(1.05);
+        box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+
+        .empty-slot {
+          color: #00ff88;
+          opacity: 1;
+          font-size: 2.5rem;
+        }
+      }
+
+      .board-card {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 6px;
+        overflow: hidden;
+
+        .board-card-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 6px;
+        }
+      }
+    }
+  }
+}
+
+// Desktop (1200px+)
+@media (min-width: 1200px) {
+  .board {
+    width: 380px; // Fixed width for desktop
+    min-width: 380px;
+    
+    .board-title {
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .board-grid {
+      grid-template-columns: repeat(3, #{$card-size-desktop});
+      grid-template-rows: repeat(3, #{$card-height-desktop});
+      width: calc(3 * #{$card-size-desktop} + 2 * 8px);
+      height: calc(3 * #{$card-height-desktop} + 2 * 8px);
+      padding: 1rem;
+      gap: 8px;
+      
+      .board-cell {
+        width: $card-size-desktop;
+        height: $card-height-desktop;
+      }
+    }
+  }
+}
+
+// Mobile styles
+@media (max-width: 767px) {
+  .board {
+    width: 280px; // Fixed width for mobile
+    min-width: 280px;
+    padding: 0.5rem;
+    
+    .board-title {
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+  }
+}

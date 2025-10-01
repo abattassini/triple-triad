@@ -1,0 +1,87 @@
+/* Match component styles - full width mobile layout */
+.game-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1.5rem;
+  width: 100vw;
+  max-width: none;
+  min-height: 80vh;
+  padding: 1rem;
+  position: relative;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+/* Mobile layout order */
+.opponent-hand {
+  order: 1;
+}
+
+.game-layout .board {
+  order: 2;
+}
+
+.player-hand {
+  order: 3;
+}
+
+/* Desktop layout (1200px+) */
+@media (min-width: 1200px) {
+  .game-layout {
+    display: grid;
+    grid-template-columns: 360px 1fr 360px;
+    grid-template-areas: 
+      "player-hand board opponent-hand";
+    gap: 3rem;
+    align-items: start;
+    justify-items: center;
+    padding: 0 3rem;
+    max-width: 1300px;
+    width: 100%;
+  }
+
+  .player-hand {
+    grid-area: player-hand;
+    justify-self: center;
+    width: 360px;
+  }
+
+  .game-layout .board {
+    grid-area: board;
+    justify-self: center;
+  }
+
+  .opponent-hand {
+    grid-area: opponent-hand;
+    justify-self: center;
+    width: 360px;
+  }
+}
+
+/* Drag overlay styles */
+.drag-overlay-card {
+  width: 120px;
+  height: 160px;
+  border-radius: 8px;
+  overflow: hidden;
+  transform: rotate(5deg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+}
+
+.drag-overlay-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+/* Mobile drag overlay */
+@media (max-width: 1199px) {
+  .drag-overlay-card {
+    width: 100px;
+    height: 140px;
+  }
+}
