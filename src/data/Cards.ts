@@ -3,10 +3,6 @@ export type Card = {
   name: string;
   blueImagePath: string;
   redImagePath: string;
-  upValue: number;
-  downValue: number;
-  leftValue: number;
-  rightValue: number;
 };
 
 export const getCardById = (id: number) => Cards.find(card => card.id === id);
@@ -17,26 +13,16 @@ export const Cards = [
     name: 'Card back',
     blueImagePath: 'back.png',
     redImagePath: 'back.png',
-  },
-  {
+  },  {
     id: 1,
     name: 'Squall',
     blueImagePath: 'squall.jpg',
     redImagePath: 'rsquall.jpg',
-    upValue: 10,
-    downValue: 6,
-    leftValue: 9,
-    rightValue: 4,
-  },
-  {
+  },  {
     id: 2,
     name: 'Odin',
     blueImagePath: 'odin.jpg',
     redImagePath: 'rodin.jpg',
-    upValue: 8,
-    downValue: 3,
-    leftValue: 5,
-    rightValue: 10,
   },
   {
     id: 3,

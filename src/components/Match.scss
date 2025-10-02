@@ -4,14 +4,15 @@
   flex-direction: column;
   align-items: stretch;
   justify-content: center;
-  gap: 1.5rem;
-  width: 100vw;
-  max-width: none;
+  gap: 0.5rem; // Reduced from 1.5rem
+  width: 100%;
+  max-width: 100vw; // Prevent overflow
   min-height: 80vh;
-  padding: 1rem;
+  padding: 0; // Remove padding on mobile to prevent overflow
   position: relative;
   margin: 0;
   box-sizing: border-box;
+  overflow-x: hidden; // Hide horizontal scrollbar
 }
 
 /* Mobile layout order */
@@ -25,6 +26,64 @@
 
 .player-hand {
   order: 3;
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 1199px) {
+  .game-layout {
+    padding: 0.5rem 0; // Only vertical padding on mobile
+    gap: 0.3rem; // Smaller gap on mobile
+    overflow-x: hidden;
+  }
+  
+  .game-layout .board {
+    align-self: center;
+    margin: 0 auto;
+  }
+}
+
+/* Mobile Landscape Mode - 3 column layout like desktop but smaller */
+@media (max-width: 1199px) and (orientation: landscape) {
+  .game-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr 200px; // Smaller than desktop (360px)
+    grid-template-areas: 
+      "player-hand board opponent-hand";
+    gap: 1rem; // Smaller gap than desktop (3rem)
+    align-items: center; // Center vertically
+    justify-items: center;
+    padding: 0.5rem 1rem;
+    max-width: 100vw;
+    width: 100%;
+    min-height: calc(100vh - 80px); // Account for title height
+    height: calc(100vh - 80px);
+  }
+
+  .player-hand {
+    grid-area: player-hand;
+    justify-self: center;
+    align-self: center; // Center vertically
+    order: unset;
+  }
+
+  .game-layout .board {
+    grid-area: board;
+    justify-self: center;
+    align-self: center; // Center vertically
+    order: unset;
+  }
+
+  .opponent-hand {
+    grid-area: opponent-hand;
+    justify-self: center;
+    align-self: center; // Center vertically
+    order: unset;
+  }
+  
+  .drag-overlay-card {
+    width: 70px; // Smaller for landscape mobile
+    height: 98px;
+  }
 }
 
 /* Desktop layout (1200px+) */
@@ -62,8 +121,8 @@
 
 /* Drag overlay styles */
 .drag-overlay-card {
-  width: 120px;
-  height: 160px;
+  width: 108px; // ~10% smaller (was 120px)
+  height: 144px; // ~10% smaller (was 160px)
   border-radius: 8px;
   overflow: hidden;
   transform: rotate(5deg);
@@ -81,7 +140,7 @@
 /* Mobile drag overlay */
 @media (max-width: 1199px) {
   .drag-overlay-card {
-    width: 100px;
-    height: 140px;
+    width: 90px; // ~10% smaller (was 100px)
+    height: 126px; // ~10% smaller (was 140px)
   }
 }

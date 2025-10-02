@@ -41,7 +41,6 @@ interface BoardProps {
 export const Board = ({ board }: BoardProps) => {
   return (
     <div className="board">
-      <h2 className="board-title">Triple Triad Board</h2>
       <div className="board-grid">
         {board.map((card, index) => (
           <DroppableCell 

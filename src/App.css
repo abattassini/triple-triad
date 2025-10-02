@@ -1,10 +1,14 @@
 .app {
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
+  width: 100%;
+  max-width: 100vw; /* Prevent horizontal overflow */
   padding: 2rem;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center; /* Center content vertically */
+  box-sizing: border-box;
+  overflow-x: hidden; /* Hide horizontal scrollbar */
 }
 
 .app h1 {
@@ -19,14 +23,31 @@
 }
 
 /* Mobile styles */
-@media (max-width: 767px) {
+@media (max-width: 1199px) {
   .app h1 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
+    display: none; /* Hide title on mobile to save space */
   }
   
   .app {
-    padding: 1rem;
+    padding: 0; /* Remove all padding on mobile to prevent overflow */
+    overflow-x: hidden;
+  }
+}
+
+/* Mobile Landscape Mode */
+@media (max-width: 1199px) and (orientation: landscape) {
+  .app {
+    padding: 0.5rem 0; /* Minimal vertical padding */
+    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
+  }
+  
+  .app h1 {
+    display: block; /* Show title in landscape */
+    font-size: 1.5rem; /* Smaller title for landscape */
+    margin-bottom: 0.5rem; /* Less margin */
   }
 }
 
