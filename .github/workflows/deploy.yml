@@ -1,12 +1,11 @@
 name: Deploy to GitHub Pages
 
-# DEPLOYMENT DISABLED - To re-enable, uncomment the sections marked with "DEPLOY:" below
 on:
-  # Disable automatic deployment on push (uncomment to re-enable)
-  # push:
-  #   branches: [ "main" ]
+  # Automatic deployment on push to main
+  push:
+    branches: [ "main" ]
 
-  # Manual trigger only
+  # Manual trigger
   workflow_dispatch:
 
 permissions:
@@ -36,38 +35,37 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build
+      - name: Build for Production
+        run: npm run build:production
 
-      # DEPLOY: Uncomment this section to re-enable deployment
-      # - name: Upload build artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: dist
-      #     path: './dist'
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: './dist'
 
-  # DEPLOY: Uncomment this entire job to re-enable deployment
-  # deploy:
-  #   needs: build
-  #   environment:
-  #     name: github-pages
-  #     url: ${{ steps.deployment.outputs.page_url }}
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Download build artifact
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         name: dist
-  #         path: './dist'
-  #
-  #     - name: Setup Pages
-  #       uses: actions/configure-pages@v4
-  #
-  #     - name: Upload artifact
-  #       uses: actions/upload-pages-artifact@v3
-  #       with:
-  #         path: './dist'
-  #
-  #     - name: Deploy to GitHub Pages
-  #       id: deployment
-  #       uses: actions/deploy-pages@v4
+  # Deploy job
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: './dist'
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

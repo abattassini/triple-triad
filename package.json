@@ -6,7 +6,10 @@
   "homepage": "https://abattassini.github.io/triple-triad",
   "scripts": {
     "dev": "vite",
+    "dev:local": "cross-env VITE_API_URL=http://localhost:5000 vite",
+    "dev:production": "cross-env VITE_API_URL=https://annoyed-karlene-argel-battassini-34f83b82.koyeb.app vite",
     "build": "tsc -b && vite build",
+    "build:production": "cross-env VITE_API_URL=https://annoyed-karlene-argel-battassini-34f83b82.koyeb.app tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write .",
@@ -30,6 +33,7 @@
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.3",
+    "cross-env": "^10.1.0",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
