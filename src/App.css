@@ -27,7 +27,7 @@
   .app h1 {
     display: none; /* Hide title on mobile to save space */
   }
-  
+
   .app {
     padding: 0; /* Remove all padding on mobile to prevent overflow */
     overflow-x: hidden;
@@ -43,7 +43,7 @@
     max-height: 100vh;
     overflow: hidden;
   }
-  
+
   .app h1 {
     display: block; /* Show title in landscape */
     font-size: 1.5rem; /* Smaller title for landscape */

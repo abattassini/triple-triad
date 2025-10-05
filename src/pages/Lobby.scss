@@ -1,0 +1,79 @@
+.lobby-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.lobby-container {
+  min-height: 100vh;
+  padding-top: 80px; // Space for hamburger menu
+}
+
+.lobby-content {
+  max-width: 1200px;
+
+  .lobby-title {
+    color: #fff;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+
+  .lobby-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+
+  .lobby-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
+    margin-top: 3rem;
+
+    .action-card {
+      background: linear-gradient(145deg, #1a1a2e, #16213e);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      border: 2px solid #3a3a5e;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+
+      &:hover {
+        border-color: #4a9eff;
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(74, 158, 255, 0.3);
+      }
+
+      h5 {
+        color: #4a9eff;
+        margin-bottom: 0.5rem;
+      }
+
+      .MuiTypography-body2 {
+        color: rgba(255, 255, 255, 0.6);
+      }
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .lobby-content {
+    .lobby-title {
+      font-size: 2rem;
+    }
+
+    .lobby-actions {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+
+      .action-card {
+        padding: 1.5rem;
+      }
+    }
+  }
+}

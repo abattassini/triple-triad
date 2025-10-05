@@ -11,27 +11,27 @@ $bg-dark: #1a1a2e;
 $bg-darker: #16213e;
 
 .board {
-  padding: 0.8rem; // Slightly increased from 0.5rem for better spacing
+  padding: 0.8rem;
   background: linear-gradient(145deg, $bg-dark, $bg-darker);
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  width: 280px; // Slightly increased from 270px to prevent card clipping
-  min-width: 280px; // Ensure it doesn't shrink
-  margin: 0 auto; // Center the board
-  align-self: center; // Center within flex container
-
+  width: fit-content;
+  margin: 0 auto;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   .board-grid {
     display: grid;
     grid-template-columns: repeat(3, #{$card-size-mobile});
     grid-template-rows: repeat(3, #{$card-height-mobile});
     gap: $board-gap;
-    width: calc(3 * #{$card-size-mobile} + 2 * #{$board-gap});
-    height: calc(3 * #{$card-height-mobile} + 2 * #{$board-gap});
-    margin: 0 auto;
-    padding: 0.6rem; // Slightly increased from 0.5rem for better spacing
+    padding: 8px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    border: 2px solid #3a3a5e;.board-cell {
+    border: 2px solid #3a3a5e;
+    box-sizing: content-box;
+    .board-cell {
       width: $card-size-mobile;
       height: $card-height-mobile;
       border: 2px solid #3a3a5e;
@@ -44,7 +44,7 @@ $bg-darker: #16213e;
       &.empty {
         border-style: dashed;
         border-color: #555;
-        
+
         &:hover {
           border-color: $primary-color;
           background: rgba(74, 158, 255, 0.1);
@@ -56,7 +56,7 @@ $bg-darker: #16213e;
           background: rgba(74, 222, 128, 0.2);
           transform: scale(1.05);
           box-shadow: 0 0 20px rgba(74, 222, 128, 0.4);
-          
+
           .empty-slot {
             color: #4ade80;
             opacity: 1;
@@ -85,7 +85,7 @@ $bg-darker: #16213e;
 
       &.occupied {
         border-color: $primary-color;
-        
+
         &:hover {
           transform: translateY(-2px);
           box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
@@ -105,9 +105,10 @@ $bg-darker: #16213e;
           font-size: 2.5rem;
         }
       }
-
       .board-card {
-        position: relative;
+        position: absolute;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
         border-radius: 6px;
@@ -118,6 +119,7 @@ $bg-darker: #16213e;
           height: 100%;
           object-fit: cover;
           border-radius: 6px;
+          display: block;
         }
       }
     }
@@ -127,22 +129,18 @@ $bg-darker: #16213e;
 // Desktop (1200px+)
 @media (min-width: 1200px) {
   .board {
-    width: 380px; // Fixed width for desktop
-    min-width: 380px;
-    
+    width: fit-content;
+
     .board-title {
       font-size: 1.4rem;
       margin-bottom: 1.5rem;
     }
-    
     .board-grid {
       grid-template-columns: repeat(3, #{$card-size-desktop});
       grid-template-rows: repeat(3, #{$card-height-desktop});
-      width: calc(3 * #{$card-size-desktop} + 2 * 8px);
-      height: calc(3 * #{$card-height-desktop} + 2 * 8px);
-      padding: 1rem;
       gap: 8px;
-      
+      padding: 12px;
+
       .board-cell {
         width: $card-size-desktop;
         height: $card-height-desktop;
@@ -154,27 +152,23 @@ $bg-darker: #16213e;
 /* Mobile Landscape Mode - Smaller board to fit horizontal layout */
 @media (max-width: 1199px) and (orientation: landscape) {
   .board {
-    width: 220px; // Smaller for landscape
-    min-width: 220px;
+    width: fit-content;
     padding: 0.5rem;
-    
     .board-grid {
       grid-template-columns: repeat(3, #{$card-size-landscape});
       grid-template-rows: repeat(3, #{$card-height-landscape});
-      width: calc(3 * #{$card-size-landscape} + 2 * #{$board-gap});
-      height: calc(3 * #{$card-height-landscape} + 2 * #{$board-gap});
-      padding: 0.4rem;
       gap: $board-gap;
-      
+      padding: 6px;
+
       .board-cell {
         width: $card-size-landscape;
         height: $card-height-landscape;
-        
+
         .empty-slot {
           font-size: 1.5rem; // Smaller + symbol
         }
       }
-      
+
       .board-card {
         .board-card-image {
           border-radius: 3px;
@@ -187,10 +181,9 @@ $bg-darker: #16213e;
 // Mobile styles
 @media (max-width: 767px) {
   .board {
-    width: 280px; // Fixed width for mobile
-    min-width: 280px;
+    width: fit-content;
     padding: 0.5rem;
-    
+
     .board-title {
       font-size: 1.2rem;
       margin-bottom: 1rem;

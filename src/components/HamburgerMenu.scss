@@ -1,0 +1,41 @@
+.menu-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+}
+
+.menu-header {
+  padding: 2rem 1.5rem 1rem;
+
+  .menu-title {
+    font-weight: 700;
+    background: linear-gradient(45deg, #4a9eff, #0078ff);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0.5rem 0.75rem;
+    background: rgba(74, 158, 255, 0.1);
+    border-radius: 8px;
+
+    .username {
+      font-size: 0.875rem;
+    }
+  }
+}
+
+.MuiListItemButton-root {
+  padding: 1rem 1.5rem;
+
+  &:hover {
+    background: rgba(74, 158, 255, 0.1);
+  }
+}

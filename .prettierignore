@@ -1,0 +1,29 @@
+# Ignore build artifacts
+dist
+build
+coverage
+
+# Ignore dependencies
+node_modules
+
+# Ignore config files that shouldn't be formatted
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.env
+.env.*
+
+# Ignore generated files
+*.min.js
+*.min.css
+
+# Ignore version control and CI/CD
+.git
+.github
+
+# Ignore public assets
+public/images/**
+
+# Ignore IDE files
+.vscode
+.idea

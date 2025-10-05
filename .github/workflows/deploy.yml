@@ -1,8 +1,12 @@
 name: Deploy to GitHub Pages
 
+# DEPLOYMENT DISABLED - To re-enable, uncomment the sections marked with "DEPLOY:" below
 on:
-  push:
-    branches: [ "main" ]
+  # Disable automatic deployment on push (uncomment to re-enable)
+  # push:
+  #   branches: [ "main" ]
+
+  # Manual trigger only
   workflow_dispatch:
 
 permissions:
@@ -12,14 +16,12 @@ permissions:
   actions: read
 
 concurrency:
-  group: "pages"
+  group: 'pages'
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # Build job - Always runs to verify the build works
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,14 +39,35 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+      # DEPLOY: Uncomment this section to re-enable deployment
+      # - name: Upload build artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: dist
+      #     path: './dist'
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './dist'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+  # DEPLOY: Uncomment this entire job to re-enable deployment
+  # deploy:
+  #   needs: build
+  #   environment:
+  #     name: github-pages
+  #     url: ${{ steps.deployment.outputs.page_url }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Download build artifact
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         name: dist
+  #         path: './dist'
+  #
+  #     - name: Setup Pages
+  #       uses: actions/configure-pages@v4
+  #
+  #     - name: Upload artifact
+  #       uses: actions/upload-pages-artifact@v3
+  #       with:
+  #         path: './dist'
+  #
+  #     - name: Deploy to GitHub Pages
+  #       id: deployment
+  #       uses: actions/deploy-pages@v4

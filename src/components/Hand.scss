@@ -2,7 +2,8 @@
   padding: 1rem;
   background: linear-gradient(145deg, #1a1a2e, #16213e);
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  width: 100%;
   max-width: 700px;
   height: 190px; // Increased from 180px to prevent card clipping
   min-height: 190px;
@@ -13,7 +14,8 @@
     margin-bottom: 0.8rem;
     font-size: 1rem;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-  }  .hand-cards {
+  }
+  .hand-cards {
     display: flex;
     gap: 0.5rem;
     justify-content: center;
@@ -52,7 +54,7 @@
     height: 560px; // Taller to prevent card cutoff on desktop screens
     min-height: 560px;
     max-height: 560px;
-    
+
     .hand-title {
       font-size: 1.2rem;
       writing-mode: horizontal-tb;
@@ -65,7 +67,7 @@
       justify-content: center;
       align-content: flex-start;
       gap: 1.2rem;
-      overflow: visible;      
+      overflow: visible;
       height: 460px; // More space for cards - increased
       padding: 0.8rem;
     }
@@ -82,7 +84,7 @@
 }
 
 /* Mobile specific adjustments */
-@media (max-width: 1199px) {  
+@media (max-width: 1199px) {
   .hand {
     width: 100%;
     max-width: none; // Remove max-width constraint
@@ -92,13 +94,13 @@
     margin: 0; // Remove centering margin
     padding: 0.8rem 0; // Remove horizontal padding on mobile to prevent overflow
     box-sizing: border-box;
-      
+
     .hand-title {
       margin-top: 0;
       margin-bottom: 0.3rem; // Slightly more space
       font-size: 0.9rem; // Slightly smaller title
     }
-      
+
     .hand-cards {
       gap: 0.6rem; // Reduced gap to fit cards better
       padding: 0.5rem 0.8rem; // Minimal horizontal padding
@@ -126,7 +128,7 @@
     padding: 0.5rem;
     display: flex;
     flex-direction: column;
-    
+
     .hand-title {
       font-size: 0.9rem;
       margin-bottom: 0.5rem;

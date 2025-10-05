@@ -35,7 +35,7 @@
     gap: 0.3rem; // Smaller gap on mobile
     overflow-x: hidden;
   }
-  
+
   .game-layout .board {
     align-self: center;
     margin: 0 auto;
@@ -47,8 +47,7 @@
   .game-layout {
     display: grid;
     grid-template-columns: 200px 1fr 200px; // Smaller than desktop (360px)
-    grid-template-areas: 
-      "player-hand board opponent-hand";
+    grid-template-areas: 'player-hand board opponent-hand';
     gap: 1rem; // Smaller gap than desktop (3rem)
     align-items: center; // Center vertically
     justify-items: center;
@@ -79,7 +78,7 @@
     align-self: center; // Center vertically
     order: unset;
   }
-  
+
   .drag-overlay-card {
     width: 70px; // Smaller for landscape mobile
     height: 98px;
@@ -91,8 +90,7 @@
   .game-layout {
     display: grid;
     grid-template-columns: 360px 1fr 360px;
-    grid-template-areas: 
-      "player-hand board opponent-hand";
+    grid-template-areas: 'player-hand board opponent-hand';
     gap: 3rem;
     align-items: start;
     justify-items: center;

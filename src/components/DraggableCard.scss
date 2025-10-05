@@ -4,12 +4,13 @@
   height: 99px; // Reduced from 110px (~10% smaller)
   background: linear-gradient(145deg, #2a2a3e, #1e1e32);
   border-radius: 6px;
-  border: 2px solid #3a3a5e;  cursor: grab;
+  border: 2px solid #3a3a5e;
+  cursor: grab;
   transition: all 0.3s ease;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
-    /* Touch-friendly styles for mobile */
+  /* Touch-friendly styles for mobile */
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -36,7 +37,7 @@
   &.card--opponent {
     cursor: default;
     border-color: #ff6b6b;
-    
+
     &:hover {
       transform: none;
       border-color: #ff6b6b;
