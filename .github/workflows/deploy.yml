@@ -3,7 +3,7 @@ name: Deploy to GitHub Pages
 on:
   # Automatic deployment on push to main
   push:
-    branches: [ "main" ]
+    branches: ['main']
 
   # Manual trigger
   workflow_dispatch:
