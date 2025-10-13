@@ -7,9 +7,9 @@
   "scripts": {
     "dev": "vite",
     "dev:local": "cross-env VITE_API_URL=http://localhost:5000 vite",
-    "dev:production": "cross-env VITE_API_URL=https://annoyed-karlene-argel-battassini-34f83b82.koyeb.app vite",
+    "dev:production": "cross-env VITE_API_URL=https://following-patricia-triple-triad-2a9e3baa.koyeb.app vite",
     "build": "tsc -b && vite build",
-    "build:production": "cross-env VITE_API_URL=https://annoyed-karlene-argel-battassini-34f83b82.koyeb.app tsc -b && vite build",
+    "build:production": "cross-env VITE_API_URL=https://following-patricia-triple-triad-2a9e3baa.koyeb.app tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "format": "prettier --write .",

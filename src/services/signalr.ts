@@ -1,6 +1,7 @@
 import * as signalR from '@microsoft/signalr';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://annoyed-karlene-argel-battassini-34f83b82.koyeb.app';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || 'https://following-patricia-triple-triad-2a9e3baa.koyeb.app';
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
