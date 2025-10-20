@@ -1,5 +1,6 @@
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'https://following-patricia-triple-triad-2a9e3baa.koyeb.app';
+  import.meta.env.VITE_API_URL ||
+  'https://actual-alexine-triple-triad-downgraded-870df4c3.koyeb.app';
 
 // API Card type (from backend)
 export interface Card {

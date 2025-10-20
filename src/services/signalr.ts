@@ -1,7 +1,8 @@
 import * as signalR from '@microsoft/signalr';
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || 'https://following-patricia-triple-triad-2a9e3baa.koyeb.app';
+  import.meta.env.VITE_API_URL ||
+  'https://actual-alexine-triple-triad-downgraded-870df4c3.koyeb.app';
 
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
