@@ -63,6 +63,19 @@ export interface JoinMatchResponse {
   playerHand: Card[];
 }
 
+export interface RegisterAccountRequest {
+  login: string;
+  email: string;
+  password: string;
+}
+
+export interface Player {
+  id: number;
+  login: string;
+  email: string;
+  createdAt: string;
+}
+
 export interface GetMatchResponse {
   match: Match;
   placements: CardPlacement[];
@@ -158,6 +171,20 @@ class ApiService {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to play card');
+    }
+    return response.json();
+  }
+
+  // Register a new account
+  async registerAccount(request: RegisterAccountRequest): Promise<Player> {
+    const response = await fetch(`${API_BASE_URL}/api/player/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Failed to create account');
     }
     return response.json();
   }

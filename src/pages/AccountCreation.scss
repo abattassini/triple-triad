@@ -1,0 +1,90 @@
+.account-creation-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.account-creation-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem;
+
+  .account-creation-title {
+    font-weight: 700;
+    background: linear-gradient(45deg, #4a9eff, #0078ff, #005ce6);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.25rem;
+  }
+
+  .account-creation-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 1.5rem;
+  }
+
+  .account-creation-success {
+    background: rgba(0, 255, 136, 0.12);
+    border: 1px solid #00c853;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+
+    .account-creation-success-text {
+      color: #00ff88;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  .account-creation-error {
+    background: rgba(255, 107, 107, 0.12);
+    border: 1px solid #ff6b6b;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+
+    .account-creation-error-text {
+      color: #ff6b6b;
+      font-weight: 600;
+    }
+  }
+
+  .account-creation-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .password-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      .check-ok {
+        color: #00ff88;
+      }
+
+      .check-error {
+        color: #ff6b6b;
+      }
+    }
+  }
+
+  .account-creation-back {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+@media (max-width: 768px) {
+  .account-creation-card {
+    padding: 1.5rem;
+
+    .account-creation-title {
+      font-size: 1.5rem;
+    }
+  }
+}

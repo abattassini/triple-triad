@@ -1,0 +1,74 @@
+.sign-in-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.sign-in-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem;
+
+  .sign-in-title {
+    font-weight: 700;
+    background: linear-gradient(45deg, #4a9eff, #0078ff, #005ce6);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.25rem;
+  }
+
+  .sign-in-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 1.5rem;
+  }
+
+  .sign-in-success {
+    background: rgba(0, 255, 136, 0.12);
+    border: 1px solid #00c853;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+
+    .sign-in-success-text {
+      color: #00ff88;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  }
+
+  .sign-in-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+
+    .sign-in-switch {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+
+      .sign-in-switch-text {
+        color: rgba(255, 255, 255, 0.7);
+      }
+    }
+  }
+
+  .sign-in-back {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+@media (max-width: 768px) {
+  .sign-in-card {
+    padding: 1.5rem;
+
+    .sign-in-title {
+      font-size: 1.5rem;
+    }
+  }
+}

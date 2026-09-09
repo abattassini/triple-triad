@@ -24,34 +24,20 @@
     margin-bottom: 3rem;
   }
 
-  .instructions {
+  .landing-actions {
     background: linear-gradient(145deg, #1a1a2e, #16213e);
     padding: 2rem;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     border: 1px solid #3a3a5e;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 
-    .instruction-text {
-      color: rgba(255, 255, 255, 0.8);
-      margin-bottom: 1rem;
-    }
-
-    .url-example {
-      color: #4a9eff;
-      font-family: 'Courier New', monospace;
-      background: rgba(74, 158, 255, 0.1);
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      margin: 1rem 0;
-
-      strong {
-        color: #00ff88;
-      }
-    }
-
-    .example-hint {
-      color: rgba(255, 255, 255, 0.5);
-      font-style: italic;
+    .landing-hint {
+      color: rgba(255, 255, 255, 0.7);
+      text-align: center;
+      margin-bottom: 0.5rem;
     }
   }
 }
@@ -66,12 +52,8 @@
       font-size: 1.2rem;
     }
 
-    .instructions {
+    .landing-actions {
       padding: 1.5rem;
-
-      .url-example {
-        font-size: 1rem;
-      }
     }
   }
 }

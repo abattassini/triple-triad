@@ -6,7 +6,7 @@
   "homepage": "https://abattassini.github.io/triple-triad",
   "scripts": {
     "dev": "vite",
-    "dev:local": "cross-env VITE_API_URL=http://localhost:5000 vite",
+    "dev:local": "cross-env VITE_API_URL=http://localhost:5041 vite",
     "dev:production": "cross-env VITE_API_URL=https://actual-alexine-triple-triad-downgraded-870df4c3.koyeb.app vite",
     "build": "tsc -b && vite build",
     "build:production": "cross-env VITE_API_URL=https://actual-alexine-triple-triad-downgraded-870df4c3.koyeb.app tsc -b && vite build",

@@ -1,7 +1,10 @@
-import { Box, Typography, Container } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box, Button, Container, Typography } from '@mui/material';
 import './Landing.scss';
 
 export const Landing: React.FC = () => {
+  const navigate = useNavigate();
+
   return (
     <Container className="landing-container">
       <Box className="landing-content">
@@ -12,16 +15,32 @@ export const Landing: React.FC = () => {
           Final Fantasy Card Game
         </Typography>
 
-        <Box className="instructions">
-          <Typography variant="body1" className="instruction-text">
-            To play, add your username to the URL:
+        <Box className="landing-actions">
+          <Typography variant="body1" className="landing-hint">
+            Sign in or create an account to play
           </Typography>
-          <Typography variant="h6" className="url-example">
-            /triple-triad/<strong>yourname</strong>
-          </Typography>
-          <Typography variant="body2" className="example-hint">
-            Example: /triple-triad/alice
-          </Typography>
+          <Button
+            variant="outlined"
+            size="large"
+            fullWidth
+            className="landing-sign-in"
+            onClick={() => navigate('/sign-in')}
+          >
+            Sign In
+          </Button>
+          <Button
+            variant="contained"
+            size="large"
+            fullWidth
+            className="landing-sign-up"
+            sx={{
+              backgroundColor: '#4a9eff',
+              '&:hover': { backgroundColor: '#3a8eef' },
+            }}
+            onClick={() => navigate('/create-account')}
+          >
+            Sign Up
+          </Button>
         </Box>
       </Box>
     </Container>
