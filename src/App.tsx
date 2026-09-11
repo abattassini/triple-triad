@@ -8,16 +8,21 @@ import { AccountCreation } from './pages/AccountCreation';
 import { SignIn } from './pages/SignIn';
 import { useAuth } from './contexts/AuthContext';
 
+// Full-screen loader shown while the persisted session is being restored.
+function LoadingScreen() {
+  return (
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <CircularProgress sx={{ color: '#4a9eff' }} />
+    </Box>
+  );
+}
+
 // Redirects unauthenticated visitors to the sign-in page.
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-        <CircularProgress sx={{ color: '#4a9eff' }} />
-      </Box>
-    );
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
@@ -27,13 +32,49 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Keeps signed-in users out of the public entry pages (Landing / Sign In / Create Account).
+function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/lobby" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <div className="app">
       <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/create-account" element={<AccountCreation />} />
-        <Route path="/sign-in" element={<SignIn />} />
+        <Route
+          path="/"
+          element={
+            <PublicOnlyRoute>
+              <Landing />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/create-account"
+          element={
+            <PublicOnlyRoute>
+              <AccountCreation />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/sign-in"
+          element={
+            <PublicOnlyRoute>
+              <SignIn />
+            </PublicOnlyRoute>
+          }
+        />
         <Route
           path="/lobby"
           element={
