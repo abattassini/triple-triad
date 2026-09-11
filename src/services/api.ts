@@ -1,6 +1,17 @@
+import { getAccessToken } from './auth';
+
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   'https://actual-alexine-triple-triad-downgraded-870df4c3.koyeb.app';
+
+// Attaches the stored JWT (when present) to API requests.
+const getAuthHeaders = (): HeadersInit => {
+  const token = getAccessToken();
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+};
 
 // API Card type (from backend)
 export interface Card {
@@ -47,7 +58,6 @@ export interface CardPlacement {
 }
 
 export interface PlayCardRequest {
-  playerId: string;
   cardId: number;
   x: number;
   y: number;
@@ -76,6 +86,16 @@ export interface Player {
   createdAt: string;
 }
 
+export interface SignInRequest {
+  identifier: string;
+  password: string;
+}
+
+export interface SignInResponse {
+  token: string;
+  player: Player;
+}
+
 export interface GetMatchResponse {
   match: Match;
   placements: CardPlacement[];
@@ -94,18 +114,19 @@ export interface PlayCardResponse {
 class ApiService {
   // Get all cards
   async getAllCards(): Promise<Card[]> {
-    const response = await fetch(`${API_BASE_URL}/api/game/cards`);
+    const response = await fetch(`${API_BASE_URL}/api/game/cards`, {
+      headers: getAuthHeaders(),
+    });
     if (!response.ok) throw new Error('Failed to fetch cards');
     return response.json();
   }
 
-  // Create a new match (Quick Match) - username IS the playerId
-  async createMatch(username: string, opponentId?: string): Promise<CreateMatchResponse> {
+  // Create a new match (Quick Match) - identity comes from the JWT
+  async createMatch(opponentId?: string): Promise<CreateMatchResponse> {
     const response = await fetch(`${API_BASE_URL}/api/game/match`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({
-        playerId: username,
         opponentId: opponentId || null, // null for PvP waiting, "AI" for AI match
       }),
     });
@@ -118,17 +139,19 @@ class ApiService {
 
   // Get waiting matches (for matchmaking)
   async getWaitingMatches(): Promise<{ id: number; player1Id: string; createdAt: string }[]> {
-    const response = await fetch(`${API_BASE_URL}/api/game/matches/waiting`);
+    const response = await fetch(`${API_BASE_URL}/api/game/matches/waiting`, {
+      headers: getAuthHeaders(),
+    });
     if (!response.ok) throw new Error('Failed to fetch waiting matches');
     return response.json();
   }
 
-  // Join an existing match - username IS the playerId
-  async joinMatch(matchId: number, username: string): Promise<JoinMatchResponse> {
+  // Join an existing match - identity comes from the JWT
+  async joinMatch(matchId: number): Promise<JoinMatchResponse> {
     const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}/join`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ playerId: username }),
+      headers: getAuthHeaders(),
+      body: JSON.stringify({}),
     });
     if (!response.ok) {
       const error = await response.json();
@@ -137,7 +160,9 @@ class ApiService {
     return response.json();
   } // Get match details
   async getMatch(matchId: number): Promise<GetMatchResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}`);
+    const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}`, {
+      headers: getAuthHeaders(),
+    });
     if (!response.ok) throw new Error('Failed to fetch match');
     const data = await response.json();
 
@@ -155,9 +180,11 @@ class ApiService {
     return data;
   }
 
-  // Get player's hand - username IS the playerId
-  async getPlayerHand(matchId: number, username: string): Promise<Card[]> {
-    const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}/hand/${username}`);
+  // Get the authenticated player's hand
+  async getPlayerHand(matchId: number): Promise<Card[]> {
+    const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}/hand`, {
+      headers: getAuthHeaders(),
+    });
     if (!response.ok) throw new Error('Failed to fetch hand');
     return response.json();
   }
@@ -165,7 +192,7 @@ class ApiService {
   async playCard(matchId: number, request: PlayCardRequest): Promise<PlayCardResponse> {
     const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}/play`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(request),
     });
     if (!response.ok) {
@@ -185,6 +212,31 @@ class ApiService {
     if (!response.ok) {
       const error = await response.json().catch(() => null);
       throw new Error(error?.error || 'Failed to create account');
+    }
+    return response.json();
+  }
+
+  // Sign in and receive a JWT + player profile
+  async signIn(identifier: string, password: string): Promise<SignInResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/player/sign-in`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, password }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Invalid login or password.');
+    }
+    return response.json();
+  }
+
+  // Get the authenticated player's profile
+  async getMe(): Promise<Player> {
+    const response = await fetch(`${API_BASE_URL}/api/player/me`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch current player');
     }
     return response.json();
   }

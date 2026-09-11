@@ -1,31 +1,33 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { Box, Typography, CircularProgress, Container, Button, Paper } from '@mui/material';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { apiService } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
+import { useAuth } from '../contexts/AuthContext';
 import './Lobby.scss';
 
 export const Lobby: React.FC = () => {
-  const { username } = useParams<{ username: string }>();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const login = user?.login;
   const [isSearching, setIsSearching] = useState(false);
   const { isConnected, on, off, joinMatch } = useSignalR();
 
   useEffect(() => {
-    if (!username) {
+    if (!login) {
       navigate('/');
       return;
     }
-  }, [username, navigate]);
+  }, [login, navigate]);
   useEffect(() => {
-    if (!isConnected || !username) return; // Listen for match joined event (when second player joins)
+    if (!isConnected || !login) return; // Listen for match joined event (when second player joins)
     const handleMatchJoined = (...args: unknown[]) => {
       const data = args[0] as { matchId: number; status: string };
       console.log('Match joined:', data);
       if (data.status === 'active') {
         setIsSearching(false);
-        navigate(`/match/${data.matchId}/${username}`);
+        navigate(`/match/${data.matchId}`);
       }
     };
 
@@ -44,10 +46,10 @@ export const Lobby: React.FC = () => {
       off('MatchJoined', handleMatchJoined);
       off('Error', handleError);
     };
-  }, [isConnected, username, navigate, on, off]);
+  }, [isConnected, login, navigate, on, off]);
 
   const handleQuickMatch = async () => {
-    if (!username || !isConnected) {
+    if (!login || !isConnected) {
       alert('Please wait for connection...');
       return;
     }
@@ -61,15 +63,15 @@ export const Lobby: React.FC = () => {
       if (waitingMatches.length > 0) {
         // Join the first waiting match
         const matchToJoin = waitingMatches[0];
-        const result = await apiService.joinMatch(matchToJoin.id, username);
+        const result = await apiService.joinMatch(matchToJoin.id);
         // Join SignalR group
         await joinMatch(result.match.id);
 
         // Navigate to match immediately
-        navigate(`/match/${result.match.id}/${username}`);
+        navigate(`/match/${result.match.id}`);
       } else {
         // Create a new match and wait for opponent
-        const result = await apiService.createMatch(username, undefined);
+        const result = await apiService.createMatch();
 
         // Join SignalR group
         await joinMatch(result.match.id);
@@ -88,7 +90,12 @@ export const Lobby: React.FC = () => {
     // TODO: Call API to cancel/delete waiting match
   };
 
-  if (!username) {
+  const handleLogout = () => {
+    signOut();
+    navigate('/');
+  };
+
+  if (!login) {
     return <Navigate to="/" replace />;
   }
 
@@ -97,11 +104,15 @@ export const Lobby: React.FC = () => {
       <HamburgerMenu />
       <Container className="lobby-content">
         <Typography variant="h3" className="lobby-title">
-          Welcome, {username}!
+          Welcome, {login}!
         </Typography>
         <Typography variant="body1" className="lobby-subtitle" sx={{ mb: 2 }}>
           {isConnected ? '🟢 Connected' : '🔴 Connecting...'}
         </Typography>
+
+        <Button variant="text" color="inherit" onClick={handleLogout} sx={{ mb: 2 }}>
+          Sign Out
+        </Button>
 
         <Box className="lobby-actions">
           <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>

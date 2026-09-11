@@ -13,16 +13,17 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
-import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './HamburgerMenu.scss';
 
 export const HamburgerMenu: React.FC = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
-  const { username } = useParams<{ username: string }>();
+  const { user, signOut } = useAuth();
+  const username = user?.login;
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -33,11 +34,13 @@ export const HamburgerMenu: React.FC = () => {
     setOpen(false);
   };
 
-  const menuItems = [
-    { text: 'Lobby', icon: <HomeIcon />, path: `/lobby/${username}` },
-    { text: 'Active Matches', icon: <SportsEsportsIcon />, path: `/matches/${username}` },
-    { text: 'Rules', icon: <HelpOutlineIcon />, path: `/rules` },
-  ];
+  const handleLogout = () => {
+    signOut();
+    setOpen(false);
+    navigate('/');
+  };
+
+  const menuItems = [{ text: 'Lobby', icon: <HomeIcon />, path: '/lobby' }];
 
   return (
     <>
@@ -97,6 +100,14 @@ export const HamburgerMenu: React.FC = () => {
                 </ListItemButton>
               </ListItem>
             ))}
+            <ListItem disablePadding>
+              <ListItemButton onClick={handleLogout}>
+                <ListItemIcon sx={{ color: '#ff6b6b', minWidth: 40 }}>
+                  <LogoutIcon />
+                </ListItemIcon>
+                <ListItemText primary="Sign Out" />
+              </ListItemButton>
+            </ListItem>
           </List>
         </Box>
       </Drawer>

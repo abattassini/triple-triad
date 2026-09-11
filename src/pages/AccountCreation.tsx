@@ -159,6 +159,18 @@ export const AccountCreation: React.FC = () => {
             <Typography variant="body1" className="account-creation-success-text">
               <CheckCircleIcon fontSize="small" /> Account created! You can now sign in.
             </Typography>
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{
+                mt: 1.5,
+                backgroundColor: '#4a9eff',
+                '&:hover': { backgroundColor: '#3a8eef' },
+              }}
+              onClick={() => navigate('/sign-in')}
+            >
+              Go to Sign In
+            </Button>
           </Box>
         )}
 
@@ -299,7 +311,7 @@ export const AccountCreation: React.FC = () => {
             size="large"
             fullWidth
             type="submit"
-            disabled={!isFormValid || isSubmitting}
+            disabled={!isFormValid || isSubmitting || submitted}
             className="account-creation-submit"
             sx={{
               backgroundColor: '#4a9eff',

@@ -38,12 +38,9 @@ export const useSignalR = () => {
     await signalRService.leaveMatch(matchId);
   }, []);
 
-  const playCard = useCallback(
-    async (matchId: number, cardId: number, x: number, y: number, playerId: string) => {
-      await signalRService.playCard(matchId, cardId, x, y, playerId);
-    },
-    []
-  );
+  const playCard = useCallback(async (matchId: number, cardId: number, x: number, y: number) => {
+    await signalRService.playCard(matchId, cardId, x, y);
+  }, []);
 
   const requestMatchStatus = useCallback(async (matchId: number) => {
     await signalRService.requestMatchStatus(matchId);

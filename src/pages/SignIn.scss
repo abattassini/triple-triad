@@ -41,6 +41,19 @@
     }
   }
 
+  .sign-in-error {
+    background: rgba(255, 107, 107, 0.12);
+    border: 1px solid #ff6b6b;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.5rem;
+
+    .sign-in-error-text {
+      color: #ff6b6b;
+      font-weight: 600;
+    }
+  }
+
   .sign-in-form {
     display: flex;
     flex-direction: column;

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
+  CircularProgress,
   Container,
   IconButton,
   InputAdornment,
@@ -10,10 +11,10 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PersonIcon from '@mui/icons-material/Person';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { useAuth } from '../contexts/AuthContext';
 import './SignIn.scss';
 
 const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
@@ -49,10 +50,12 @@ const validateSignInPassword = (value: string): string | undefined => {
 
 export const SignIn: React.FC = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [touched, setTouched] = useState<TouchedFields>(TOUCHED_NONE);
 
   const identifierError = validateIdentifier(identifier);
@@ -63,18 +66,23 @@ export const SignIn: React.FC = () => {
     setTouched({ ...touched, [field]: true });
   };
 
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = event => {
+  const handleSubmit: React.FormEventHandler<HTMLFormElement> = async event => {
     event.preventDefault();
     setTouched({ identifier: true, password: true });
     if (!isFormValid) {
       return;
     }
-    // TODO: Replace with a real call to the auth backend once it is wired up.
-    console.log('Sign in payload (frontend only):', {
-      identifier: identifier.trim(),
-      password,
-    });
-    setSubmitted(true);
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      await signIn(identifier.trim(), password);
+      navigate('/lobby');
+    } catch (error) {
+      setSubmitError((error as Error).message);
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -95,10 +103,10 @@ export const SignIn: React.FC = () => {
           Welcome back! Enter your login or email to continue
         </Typography>
 
-        {submitted && (
-          <Box className="sign-in-success">
-            <Typography variant="body1" className="sign-in-success-text">
-              <CheckCircleIcon fontSize="small" /> Signed in! Backend integration pending.
+        {submitError && (
+          <Box className="sign-in-error">
+            <Typography variant="body1" className="sign-in-error-text">
+              {submitError}
             </Typography>
           </Box>
         )}
@@ -169,14 +177,14 @@ export const SignIn: React.FC = () => {
             size="large"
             fullWidth
             type="submit"
-            disabled={!isFormValid}
+            disabled={!isFormValid || isSubmitting}
             className="sign-in-submit"
             sx={{
               backgroundColor: '#4a9eff',
               '&:hover': { backgroundColor: '#3a8eef' },
             }}
           >
-            Sign In
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : 'Sign In'}
           </Button>
 
           <Box className="sign-in-switch">

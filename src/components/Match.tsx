@@ -30,6 +30,7 @@ import {
   type LocalCard,
 } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
+import { useAuth } from '../contexts/AuthContext';
 import './Match.scss';
 
 // Helper function to convert API card to local card format
@@ -57,8 +58,10 @@ const convertApiCardToLocalCard = (
 };
 
 export const Match: React.FC = () => {
-  const { matchId, username } = useParams<{ matchId: string; username: string }>();
+  const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const userId = user?.login;
   const {
     isConnected,
     on,
@@ -107,7 +110,7 @@ export const Match: React.FC = () => {
 
     console.log('✅ Drag ended:', { active: active?.id, over: over?.id, event });
 
-    if (over && over.id !== undefined && matchId && username) {
+    if (over && over.id !== undefined && matchId && userId) {
       const boardIndex = Number(over.id);
       const cardId = Number(active.id);
 
@@ -127,8 +130,8 @@ export const Match: React.FC = () => {
             const y = Math.floor(boardIndex / 3);
 
             // Send move to backend via SignalR
-            console.log('🎮 Playing card via SignalR:', { matchId, cardId, x, y, username });
-            await playCardSignalR(parseInt(matchId), cardId, x, y, username);
+            console.log('🎮 Playing card via SignalR:', { matchId, cardId, x, y, userId });
+            await playCardSignalR(parseInt(matchId), cardId, x, y);
 
             // Don't update local state further - wait for CardPlayed event from SignalR
             // If there's an error, the CardPlayed event won't fire and the hand will be
@@ -164,8 +167,8 @@ export const Match: React.FC = () => {
   // Load match data on component mount
   useEffect(() => {
     const loadMatchData = async () => {
-      if (!matchId || !username) {
-        setError('Missing match ID or username');
+      if (!matchId || !userId) {
+        setError('Missing match ID or user');
         setLoading(false);
         return;
       }
@@ -184,11 +187,11 @@ export const Match: React.FC = () => {
         setBoard(newBoard);
 
         // Get player's hand
-        const hand = await apiService.getPlayerHand(parseInt(matchId), username);
+        const hand = await apiService.getPlayerHand(parseInt(matchId));
         setPlayerHand(hand.map(card => convertApiCardToLocalCard(card)));
 
         // Create opponent hand (card backs)
-        const opponentPlacements = matchResponse.placements.filter(p => p.playerId !== username);
+        const opponentPlacements = matchResponse.placements.filter(p => p.playerId !== userId);
         const opponentHandSize = 5 - opponentPlacements.length;
         const cardBacks: LocalCard[] = Array(opponentHandSize)
           .fill(null)
@@ -201,7 +204,7 @@ export const Match: React.FC = () => {
         setOpponentHand(cardBacks);
 
         // Check if it's player's turn
-        setIsMyTurn(matchResponse.match.currentPlayerTurn === username);
+        setIsMyTurn(matchResponse.match.currentPlayerTurn === userId);
 
         setLoading(false);
       } catch (err) {
@@ -211,11 +214,11 @@ export const Match: React.FC = () => {
       }
     };
     loadMatchData();
-  }, [matchId, username]);
+  }, [matchId, userId]);
 
   // Check for game completion (all 9 board positions occupied)
   useEffect(() => {
-    if (!match || !username) return;
+    if (!match || !userId) return;
 
     // Count filled positions
     const filledPositions = board.filter(cell => cell !== null).length;
@@ -227,9 +230,8 @@ export const Match: React.FC = () => {
       // Wait 3 seconds before showing the dialog
       const timer = setTimeout(() => {
         // Determine result
-        const playerScore = match.player1Id === username ? match.player1Score : match.player2Score;
-        const opponentScore =
-          match.player1Id === username ? match.player2Score : match.player1Score;
+        const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
+        const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
 
         let result: 'won' | 'lost' | 'draw';
         if (playerScore > opponentScore) {
@@ -246,7 +248,7 @@ export const Match: React.FC = () => {
 
       return () => clearTimeout(timer);
     }
-  }, [board, match, username]);
+  }, [board, match, userId]);
 
   // SignalR event handlers
   useEffect(() => {
@@ -278,8 +280,8 @@ export const Match: React.FC = () => {
         setBoard(newBoard);
 
         // Update player's hand
-        if (data.playerId === username) {
-          const hand = await apiService.getPlayerHand(parseInt(matchId), username);
+        if (data.playerId === userId) {
+          const hand = await apiService.getPlayerHand(parseInt(matchId));
           setPlayerHand(hand.map(card => convertApiCardToLocalCard(card)));
         } else {
           // Update opponent hand (remove one card back)
@@ -301,7 +303,7 @@ export const Match: React.FC = () => {
         );
 
         // Update turn state
-        setIsMyTurn(data.currentPlayer === username);
+        setIsMyTurn(data.currentPlayer === userId);
 
         console.log('✅ Board and state updated successfully');
       } catch (error) {
@@ -344,19 +346,19 @@ export const Match: React.FC = () => {
       off('GameCompleted', handleGameCompleted);
       off('Error', handleError);
     };
-  }, [isConnected, matchId, username, joinSignalRMatch, on, off]);
+  }, [isConnected, matchId, userId, joinSignalRMatch, on, off]);
 
   // Detect game completion and show dialog after 3 seconds
   useEffect(() => {
-    if (!match || !username) return;
+    if (!match || !userId) return;
 
     // Check if all 9 board positions are filled
     const isBoardFull = board.every(cell => cell !== null);
 
     if (isBoardFull && match.status === 'completed' && !showGameOver) {
       // Determine game result
-      const playerScore = match.player1Id === username ? match.player1Score : match.player2Score;
-      const opponentScore = match.player1Id === username ? match.player2Score : match.player1Score;
+      const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
+      const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
 
       let result: 'won' | 'lost' | 'draw';
       if (playerScore > opponentScore) {
@@ -375,10 +377,10 @@ export const Match: React.FC = () => {
 
       return () => clearTimeout(timer);
     }
-  }, [board, match, username, showGameOver]);
+  }, [board, match, userId, showGameOver]);
   const getOpponentName = () => {
     if (!match) return 'Opponent';
-    return match.player1Id === username ? match.player2Id : match.player1Id;
+    return match.player1Id === userId ? match.player2Id : match.player1Id;
   };
 
   // Loading state
@@ -415,11 +417,11 @@ export const Match: React.FC = () => {
     );
   } // Get scores based on which player we are
   const opponentName = getOpponentName();
-  const playerScore = match.player1Id === username ? match.player1Score : match.player2Score;
-  const opponentScore = match.player1Id === username ? match.player2Score : match.player1Score;
+  const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
+  const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
   // Handle game over dialog actions
   const handleReturnToLobby = () => {
-    navigate(`/lobby/${username}`);
+    navigate('/lobby');
   };
 
   return (
@@ -456,10 +458,10 @@ export const Match: React.FC = () => {
           isOpponent={true}
           className="opponent-hand"
         />{' '}
-        <Board board={board} currentUsername={username} />
+        <Board board={board} currentUsername={userId} />
         <Hand
           cards={playerHand}
-          title={`${username} - Score: ${playerScore}`}
+          title={`${userId} - Score: ${playerScore}`}
           isOpponent={false}
           className="player-hand"
           isMyTurn={isMyTurn}
@@ -519,7 +521,7 @@ export const Match: React.FC = () => {
           >
             <Box>
               <Typography variant="h6" sx={{ color: '#4a9eff' }}>
-                {username}
+                {userId}
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#4eff4a' }}>
                 {playerScore}

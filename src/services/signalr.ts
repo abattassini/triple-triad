@@ -1,4 +1,5 @@
 import * as signalR from '@microsoft/signalr';
+import { getAccessToken } from './auth';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
@@ -15,6 +16,7 @@ class SignalRService {
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(`${API_BASE_URL}/gamehub`, {
         withCredentials: false,
+        accessTokenFactory: () => getAccessToken() ?? '',
       })
       .withAutomaticReconnect()
       .configureLogging(signalR.LogLevel.Information)
@@ -48,16 +50,10 @@ class SignalRService {
     await this.connection.invoke('LeaveMatch', matchId);
   }
 
-  // Play a card
-  async playCard(
-    matchId: number,
-    cardId: number,
-    x: number,
-    y: number,
-    playerId: string
-  ): Promise<void> {
+  // Play a card (the hub validates the JWT passed as the 5th argument)
+  async playCard(matchId: number, cardId: number, x: number, y: number): Promise<void> {
     if (!this.connection) throw new Error('Not connected');
-    await this.connection.invoke('PlayCard', matchId, cardId, x, y, playerId);
+    await this.connection.invoke('PlayCard', matchId, cardId, x, y, getAccessToken() ?? '');
   }
 
   // Request match status
