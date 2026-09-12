@@ -84,6 +84,12 @@ export interface Player {
   login: string;
   email: string;
   createdAt: string;
+  coins: number;
+  experience: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  avatarUrl: string | null;
 }
 
 export interface SignInRequest {
@@ -101,6 +107,13 @@ export interface GetMatchResponse {
   placements: CardPlacement[];
 }
 
+export interface MatchRewards {
+  player1Coins: number;
+  player1Experience: number;
+  player2Coins: number;
+  player2Experience: number;
+}
+
 export interface PlayCardResponse {
   success: boolean;
   capturedCards: Array<{ id: number; x: number; y: number }>;
@@ -109,6 +122,8 @@ export interface PlayCardResponse {
   currentPlayer: string;
   isGameComplete: boolean;
   winnerId: string | null;
+  // Present only on the move that completes the match.
+  rewards?: MatchRewards | null;
 }
 
 class ApiService {

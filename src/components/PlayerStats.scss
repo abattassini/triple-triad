@@ -1,0 +1,195 @@
+.player-stats {
+  color: #fff;
+
+  // Shared card look for the Paper-based variants.
+  &.player-stats--card,
+  &.player-stats--sidebar {
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    border: 2px solid #3a3a5e;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  &__avatar {
+    border: 2px solid #4a9eff;
+    background: #16213e;
+    flex-shrink: 0;
+  }
+
+  &__name {
+    color: #fff;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  // ---- coins pill ----
+  &__coins {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 204, 0, 0.12);
+    border: 1px solid rgba(255, 204, 0, 0.35);
+    color: #ffcc00;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  &__coin-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  // ---- XP ----
+  &__xp-block {
+    width: 100%;
+    margin-top: 0.35rem;
+  }
+
+  &__level {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+  }
+
+  // ---- card (mobile hero + tiles) ----
+  &--card {
+    padding: 1.25rem;
+
+    .player-stats__hero {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .player-stats__identity {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  &__tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  &__tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.75rem 0.5rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid #3a3a5e;
+
+    &-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    &-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    &--wins .player-stats__tile-value {
+      color: #4eff4a;
+    }
+
+    &--losses .player-stats__tile-value {
+      color: #ff6b6b;
+    }
+
+    &--ties .player-stats__tile-value {
+      color: #ffcc00;
+    }
+  }
+
+  // ---- sidebar (desktop) ----
+  &--sidebar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1.5rem;
+    width: 100%;
+  }
+
+  &__record {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  &__record-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid #3a3a5e;
+  }
+
+  &__record-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.7);
+
+    &--wins {
+      color: #4eff4a;
+    }
+
+    &--losses {
+      color: #ff6b6b;
+    }
+
+    &--ties {
+      color: #ffcc00;
+    }
+  }
+
+  &__record-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  // ---- compact (drawer) ----
+  &--compact {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  &__compact-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  &__compact-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #fff;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &--compact .player-stats__coins {
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8rem;
+  }
+}

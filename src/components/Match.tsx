@@ -28,6 +28,7 @@ import {
   type Card as ApiCard,
   type Match as MatchData,
   type LocalCard,
+  type MatchRewards,
 } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
@@ -85,6 +86,8 @@ export const Match: React.FC = () => {
   // Game completion dialog state
   const [showGameOver, setShowGameOver] = useState(false);
   const [gameResult, setGameResult] = useState<'won' | 'lost' | 'draw' | null>(null);
+  // Rewards granted when the match completed (coins/XP for both sides).
+  const [lastRewards, setLastRewards] = useState<MatchRewards | null>(null);
 
   // Configure sensors for better DevTools and mobile support
   const pointerSensor = useSensor(PointerSensor, {
@@ -316,8 +319,10 @@ export const Match: React.FC = () => {
         player1Score: number;
         player2Score: number;
         completedAt: string;
+        rewards?: MatchRewards | null;
       };
       console.log('Game completed:', data);
+      setLastRewards(data.rewards ?? null);
       setMatch(prev =>
         prev
           ? {
@@ -419,6 +424,12 @@ export const Match: React.FC = () => {
   const opponentName = getOpponentName();
   const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
   const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
+  // Rewards granted to this player when the match completed (if any).
+  const myReward = lastRewards
+    ? match.player1Id === userId
+      ? { coins: lastRewards.player1Coins, experience: lastRewards.player1Experience }
+      : { coins: lastRewards.player2Coins, experience: lastRewards.player2Experience }
+    : null;
   // Handle game over dialog actions
   const handleReturnToLobby = () => {
     navigate('/lobby');
@@ -553,7 +564,29 @@ export const Match: React.FC = () => {
             <Typography variant="body1" sx={{ color: '#ffcc00', mb: 1 }}>
               Evenly matched! A true battle of equals!
             </Typography>
-          )}{' '}
+          )}
+          {myReward && (
+            <Box
+              sx={{
+                mt: 2,
+                display: 'inline-flex',
+                gap: 2,
+                alignItems: 'center',
+                px: 2,
+                py: 1,
+                borderRadius: 2,
+                background: 'rgba(255, 204, 0, 0.12)',
+                border: '1px solid rgba(255, 204, 0, 0.35)',
+              }}
+            >
+              <Typography variant="h6" sx={{ color: '#ffcc00', fontWeight: 'bold' }}>
+                🪙 +{myReward.coins}
+              </Typography>
+              <Typography variant="h6" sx={{ color: '#4a9eff', fontWeight: 'bold' }}>
+                ⭐ +{myReward.experience} XP
+              </Typography>
+            </Box>
+          )}
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
           <Button

@@ -40,12 +40,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   }, []);
 
+  // Re-fetches the profile (coins/XP/W-L-T may have changed after a match).
+  const refreshUser = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) return;
+
+    try {
+      const me = await apiService.getMe();
+      setUser(me);
+      setSession(token, me);
+    } catch {
+      // Keep the cached user if the refresh fails (e.g. offline / transient error).
+    }
+  }, []);
+
   const value: AuthContextValue = {
     user,
     isAuthenticated: Boolean(user),
     loading,
     signIn,
     signOut,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -7,6 +7,8 @@ export interface AuthContextValue {
   loading: boolean;
   signIn: (identifier: string, password: string) => Promise<void>;
   signOut: () => void;
+  // Re-fetches the current player profile (e.g. to pick up post-match stats).
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);

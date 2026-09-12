@@ -77,3 +77,44 @@
     }
   }
 }
+
+/* ── Player stats panel ─────────────────────────────────────────
+   Mobile-first: the `card` variant (hero + tiles) is shown below
+   1200px; the `sidebar` variant replaces it on desktop. */
+.lobby-stats-mobile {
+  display: block;
+  margin-bottom: 1.5rem;
+}
+
+.lobby-stats-desktop {
+  display: none;
+}
+
+.lobby-body {
+  display: block;
+}
+
+/* Desktop (>=1200px, matches the game board's desktop breakpoint):
+   sticky profile sidebar + action cards in the remaining column. */
+@media (min-width: 1200px) {
+  .lobby-stats-mobile {
+    display: none;
+  }
+
+  .lobby-stats-desktop {
+    display: flex;
+    position: sticky;
+    top: 96px;
+  }
+
+  .lobby-body {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .lobby-content .lobby-actions {
+    margin-top: 0;
+  }
+}

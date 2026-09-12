@@ -14,16 +14,15 @@ import {
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import LogoutIcon from '@mui/icons-material/Logout';
-import PersonIcon from '@mui/icons-material/Person';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { PlayerStats } from './PlayerStats';
 import './HamburgerMenu.scss';
 
 export const HamburgerMenu: React.FC = () => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const username = user?.login;
 
   const toggleDrawer = (newOpen: boolean) => () => {
     setOpen(newOpen);
@@ -78,12 +77,9 @@ export const HamburgerMenu: React.FC = () => {
             <Typography variant="h5" className="menu-title">
               Triple Triad
             </Typography>
-            {username && (
+            {user && (
               <Box className="user-info">
-                <PersonIcon fontSize="small" />
-                <Typography variant="body2" className="username">
-                  Playing as: {username}
-                </Typography>
+                <PlayerStats player={user} variant="compact" />
               </Box>
             )}
           </Box>
