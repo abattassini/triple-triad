@@ -22,7 +22,7 @@ export interface Card {
   rightValue: number;
   bottomValue: number;
   leftValue: number;
-  element?: string;
+  element?: string[];
   level?: number;
 }
 

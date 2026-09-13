@@ -43,7 +43,9 @@ const convertApiCardToLocalCard = (
     id: apiCard.id,
     name: apiCard.name,
     blueImagePath: apiCard.image,
-    redImagePath: 'r' + apiCard.image, // Red version has 'r' prefix
+    // Red variant lives next to the blue one, so only the file name gets the
+    // 'r' prefix (image may include a deck folder, e.g. "ff8-deck/squall.jpg").
+    redImagePath: apiCard.image.replace(/([^/]+)$/, 'r$1'),
     owner, // Track who owns this card
   };
 
@@ -201,8 +203,8 @@ export const Match: React.FC = () => {
           .map((_, index) => ({
             id: -1 - index, // Negative IDs for card backs
             name: 'Card back',
-            blueImagePath: 'back.png',
-            redImagePath: 'back.png',
+            blueImagePath: 'ff8-deck/back.png',
+            redImagePath: 'ff8-deck/back.png',
           }));
         setOpponentHand(cardBacks);
 
