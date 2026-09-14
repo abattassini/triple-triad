@@ -163,21 +163,81 @@
   letter-spacing: 0.08em;
 }
 
-/* Brief flash when a rule fires on a played card */
+/* Full-field effect when a rule fires on a played card (SAME today; Combo/Plus later).
+   It covers the whole play area, so it must never capture pointer events or it would block
+   board drag & drop for as long as it is on screen. */
 .match-rule-flash {
-  margin-top: 4px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 900; // Over the board, under .drag-overlay-card (1000) and MUI dialogs (1300)
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 204, 0, 0.32) 0%,
+    rgba(255, 204, 0, 0.12) 45%,
+    rgba(255, 204, 0, 0) 75%
+  );
+  // Fades in and out over the 2.5s the flash is mounted (see Match.tsx), so the effect always
+  // ends transparent even if that JS timer is ever changed or dropped.
+  animation: rule-flash 2.5s ease-out forwards;
+}
+
+/* 3x the previous inline text (MUI h6 = 1.25rem), clamped so it still fits narrow phones */
+.match-rule-flash-text {
+  font-size: clamp(2.25rem, 10vw, 3.75rem);
+  font-weight: 800;
+  letter-spacing: 0.05em;
   color: #ffcc00;
-  animation: rule-flash 0.4s ease-in-out;
+  text-shadow:
+    0 0 14px rgba(255, 204, 0, 0.8),
+    0 6px 18px rgba(0, 0, 0, 0.65);
+  animation: rule-flash-text 0.6s ease-out;
 }
 
 @keyframes rule-flash {
-  from {
-    transform: scale(0.8);
+  0% {
     opacity: 0;
   }
 
-  to {
-    transform: scale(1);
+  10% {
     opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes rule-flash-text {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Keep the message, drop the pop for players who ask for less motion */
+@media (prefers-reduced-motion: reduce) {
+  .match-rule-flash-text {
+    animation: none;
   }
 }

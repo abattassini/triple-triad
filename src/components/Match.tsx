@@ -490,11 +490,6 @@ export const Match: React.FC = () => {
             ))}
           </Box>
         )}
-        {lastTriggeredRule && (
-          <Typography variant="h6" className="match-rule-flash">
-            ⚡ {lastTriggeredRule}!
-          </Typography>
-        )}
       </Box>
       <div className="game-layout">
         <Hand
@@ -511,6 +506,14 @@ export const Match: React.FC = () => {
           className="player-hand"
           isMyTurn={isMyTurn}
         />
+        {/* Full-field effect when a rule fires (e.g. SAME). It is absolutely positioned, so it
+            covers the hand/board without shifting the layout, and `pointer-events: none` in
+            Match.scss keeps drag & drop on the board working while it is on screen. */}
+        {lastTriggeredRule && (
+          <div className="match-rule-flash">
+            <span className="match-rule-flash-text">⚡ {lastTriggeredRule}!</span>
+          </div>
+        )}
       </div>
       <DragOverlay>
         {activeCard ? (
