@@ -3,7 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { Box, Typography, CircularProgress, Container, Button, Paper } from '@mui/material';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { PlayerStats } from '../components/PlayerStats';
-import { apiService } from '../services/api';
+import { apiService, DEFAULT_MATCH_RULES } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
 import './Lobby.scss';
@@ -76,8 +76,8 @@ export const Lobby: React.FC = () => {
         // Navigate to match immediately
         navigate(`/match/${result.match.id}`);
       } else {
-        // Create a new match and wait for opponent
-        const result = await apiService.createMatch();
+        // Create a new match and wait for opponent (with the UI's default rules, see api.ts)
+        const result = await apiService.createMatch(undefined, DEFAULT_MATCH_RULES);
 
         // Join SignalR group
         await joinMatch(result.match.id);
@@ -130,6 +130,13 @@ export const Lobby: React.FC = () => {
               <Typography variant="body2" sx={{ color: '#ccc', mb: 2 }}>
                 Join a match with a random opponent
               </Typography>
+
+              {/* Driven by DEFAULT_MATCH_RULES, so reverting to [] also removes this line. */}
+              {DEFAULT_MATCH_RULES.length > 0 && (
+                <Typography variant="body2" sx={{ color: '#4a9eff', mb: 2 }}>
+                  Rules: {DEFAULT_MATCH_RULES.map(rule => rule.toUpperCase()).join(' · ')}
+                </Typography>
+              )}
 
               {isSearching ? (
                 <Box sx={{ textAlign: 'center', py: 2 }}>
