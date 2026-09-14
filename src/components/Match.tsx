@@ -29,6 +29,7 @@ import {
   type Match as MatchData,
   type LocalCard,
   type MatchRewards,
+  type MatchRule,
 } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
@@ -60,6 +61,14 @@ const convertApiCardToLocalCard = (
   return result;
 };
 
+// Read-only labels for the special rules a match can enable (backend MatchRule names).
+const RULE_LABELS: Partial<Record<MatchRule, string>> = {
+  Same: 'SAME',
+};
+
+// Unknown rule names fall back to their upper-cased name so new backend rules still show up.
+const ruleLabel = (rule: string): string => RULE_LABELS[rule as MatchRule] ?? rule.toUpperCase();
+
 export const Match: React.FC = () => {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
@@ -90,6 +99,8 @@ export const Match: React.FC = () => {
   const [gameResult, setGameResult] = useState<'won' | 'lost' | 'draw' | null>(null);
   // Rewards granted when the match completed (coins/XP for both sides).
   const [lastRewards, setLastRewards] = useState<MatchRewards | null>(null);
+  // Rule that fired on the most recent move (e.g. SAME), flashed briefly as feedback.
+  const [lastTriggeredRule, setLastTriggeredRule] = useState<string | null>(null);
 
   // Configure sensors for better DevTools and mobile support
   const pointerSensor = useSensor(PointerSensor, {
@@ -265,6 +276,7 @@ export const Match: React.FC = () => {
         x: number;
         y: number;
         capturedCards: Array<{ id: number; x: number; y: number; newOwner: string }>;
+        triggeredRules: MatchRule[];
         player1Score: number;
         player2Score: number;
         currentPlayer: string;
@@ -272,6 +284,12 @@ export const Match: React.FC = () => {
         winnerId: string | null;
       };
       console.log('🎴 Card played event received:', data);
+
+      // Flash the rule that fired (e.g. SAME) so both players notice the extra captures.
+      if (data.triggeredRules && data.triggeredRules.length > 0) {
+        setLastTriggeredRule(ruleLabel(data.triggeredRules[0]));
+        setTimeout(() => setLastTriggeredRule(null), 2500);
+      }
 
       try {
         // Fetch the updated match state to get the actual card and board
@@ -461,6 +479,20 @@ export const Match: React.FC = () => {
         {!isConnected && (
           <Typography variant="body2" sx={{ color: '#ff9800' }}>
             ⚠️ Disconnected from server
+          </Typography>
+        )}
+        {match.rules && match.rules.length > 0 && (
+          <Box className="match-rules">
+            {match.rules.map(rule => (
+              <span key={rule} className="rule-chip">
+                {ruleLabel(rule)}
+              </span>
+            ))}
+          </Box>
+        )}
+        {lastTriggeredRule && (
+          <Typography variant="h6" className="match-rule-flash">
+            ⚡ {lastTriggeredRule}!
           </Typography>
         )}
       </Box>

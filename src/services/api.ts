@@ -34,6 +34,9 @@ export interface LocalCard {
   redImagePath: string;
 }
 
+// Special rules that can be enabled on a match (mirrors the backend MatchRule enum).
+export type MatchRule = 'Same';
+
 export interface Match {
   id: number;
   player1Id: string;
@@ -45,6 +48,8 @@ export interface Match {
   winnerId: string | null;
   createdAt?: string;
   completedAt?: string | null;
+  // Rules enabled when the match was created (empty array = no special rules).
+  rules: MatchRule[];
 }
 
 export interface CardPlacement {
@@ -117,6 +122,8 @@ export interface MatchRewards {
 export interface PlayCardResponse {
   success: boolean;
   capturedCards: Array<{ id: number; x: number; y: number }>;
+  // Rules that fired on this move (e.g. ["Same"]); empty when none did.
+  triggeredRules: MatchRule[];
   player1Score: number;
   player2Score: number;
   currentPlayer: string;
@@ -137,12 +144,14 @@ class ApiService {
   }
 
   // Create a new match (Quick Match) - identity comes from the JWT
-  async createMatch(opponentId?: string): Promise<CreateMatchResponse> {
+  // `rules` are the special rules to enable for the match (e.g. ['Same']).
+  async createMatch(opponentId?: string, rules: MatchRule[] = []): Promise<CreateMatchResponse> {
     const response = await fetch(`${API_BASE_URL}/api/game/match`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
         opponentId: opponentId || null, // null for PvP waiting, "AI" for AI match
+        rules,
       }),
     });
     if (!response.ok) {
@@ -153,7 +162,9 @@ class ApiService {
   }
 
   // Get waiting matches (for matchmaking)
-  async getWaitingMatches(): Promise<{ id: number; player1Id: string; createdAt: string }[]> {
+  async getWaitingMatches(): Promise<
+    { id: number; player1Id: string; createdAt: string; rules: MatchRule[] }[]
+  > {
     const response = await fetch(`${API_BASE_URL}/api/game/matches/waiting`, {
       headers: getAuthHeaders(),
     });
