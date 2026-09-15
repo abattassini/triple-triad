@@ -35,11 +35,11 @@ export interface LocalCard {
 }
 
 // Special rules that can be enabled on a match (mirrors the backend MatchRule enum).
-export type MatchRule = 'Same';
+export type MatchRule = 'Same' | 'Plus';
 
 // Rules the UI enables by default when it creates a match (Quick Match).
 // 👉 To revert to basic-rules-only matches, set this to [] — nothing else needs to change.
-export const DEFAULT_MATCH_RULES: MatchRule[] = ['Same'];
+export const DEFAULT_MATCH_RULES: MatchRule[] = ['Same', 'Plus'];
 
 export interface Match {
   id: number;

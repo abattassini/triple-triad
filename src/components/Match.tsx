@@ -64,6 +64,7 @@ const convertApiCardToLocalCard = (
 // Read-only labels for the special rules a match can enable (backend MatchRule names).
 const RULE_LABELS: Partial<Record<MatchRule, string>> = {
   Same: 'SAME',
+  Plus: 'PLUS',
 };
 
 // Unknown rule names fall back to their upper-cased name so new backend rules still show up.
