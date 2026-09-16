@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -39,7 +40,10 @@ export const HamburgerMenu: React.FC = () => {
     navigate('/');
   };
 
-  const menuItems = [{ text: 'Lobby', icon: <HomeIcon />, path: '/lobby' }];
+  const menuItems = [
+    { text: 'Lobby', icon: <HomeIcon />, path: '/lobby' },
+    { text: 'Card Shop', icon: <StorefrontIcon />, path: '/shop' },
+  ];
 
   return (
     <>

@@ -3,6 +3,7 @@ import { Box, CircularProgress } from '@mui/material';
 import './App.css';
 import { Landing } from './pages/Landing';
 import { Lobby } from './pages/Lobby';
+import { CardShop } from './pages/CardShop';
 import { MatchPage } from './pages/MatchPage';
 import { AccountCreation } from './pages/AccountCreation';
 import { SignIn } from './pages/SignIn';
@@ -88,6 +89,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MatchPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/shop"
+          element={
+            <ProtectedRoute>
+              <CardShop />
             </ProtectedRoute>
           }
         />

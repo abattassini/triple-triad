@@ -138,6 +138,47 @@ export interface PlayCardResponse {
   rewards?: MatchRewards | null;
 }
 
+// ---------------------------------------------------------------------------
+// Card shop
+// ---------------------------------------------------------------------------
+
+// One row of the pack's odds table: the level, its draw weight (600 - 20x) and that weight as a percentage.
+export interface PackLevelOdds {
+  level: number;
+  weight: number;
+  chancePercent: number;
+}
+
+// The pack on offer, served by the backend so the page cannot drift from the server (price 1500, 5 cards).
+export interface PackOffer {
+  price: number;
+  cardCount: number;
+  levelOdds: PackLevelOdds[];
+}
+
+// A card the pack handed out, with what it did to the collection.
+export interface PackCard extends Card {
+  // How many copies the player holds after this pack (a card drawn twice reads 1 then 2).
+  quantityOwned: number;
+  // True when the player owned no copy of the card before this pack.
+  isNew: boolean;
+}
+
+export interface PackPurchaseResponse {
+  success: boolean;
+  price: number;
+  coinsAfter: number;
+  cards: PackCard[];
+}
+
+// One entry of the player's collection (api/player/cards). No screen reads this yet.
+export interface OwnedCard {
+  card: Card;
+  quantity: number;
+  firstAcquiredAt: string;
+  lastAcquiredAt: string;
+}
+
 class ApiService {
   // Get all cards
   async getAllCards(): Promise<Card[]> {
@@ -268,6 +309,43 @@ class ApiService {
     });
     if (!response.ok) {
       throw new Error('Failed to fetch current player');
+    }
+    return response.json();
+  }
+
+  // Card shop: what a pack costs, how many cards it holds and the odds of each level.
+  async getPackOffer(): Promise<PackOffer> {
+    const response = await fetch(`${API_BASE_URL}/api/shop/pack`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to load the card shop');
+    }
+    return response.json();
+  }
+
+  // Buy a pack. The backend charges the coins and returns the cards it opened, or a 400 when
+  // the player cannot afford it (nothing is written in that case).
+  async buyPack(): Promise<PackPurchaseResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/shop/pack/purchase`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Failed to buy a pack');
+    }
+    return response.json();
+  }
+
+  // The signed-in player's collection (endpoint only for now — no screen reads it yet).
+  async getMyCards(): Promise<OwnedCard[]> {
+    const response = await fetch(`${API_BASE_URL}/api/player/cards`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to load your cards');
     }
     return response.json();
   }

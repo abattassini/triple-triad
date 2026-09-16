@@ -170,6 +170,27 @@ export const Lobby: React.FC = () => {
               )}
             </Paper>
 
+            <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>
+              <Typography variant="h5" sx={{ color: '#4a9eff', mb: 1 }}>
+                🛒 Card Shop
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#ccc', mb: 2 }}>
+                Buy a 5-card pack for 1,500 coins
+              </Typography>
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                onClick={() => navigate('/shop')}
+                sx={{
+                  backgroundColor: '#4a9eff',
+                  '&:hover': { backgroundColor: '#3a8eef' },
+                }}
+              >
+                Open Shop
+              </Button>
+            </Paper>
+
             <Paper
               elevation={3}
               sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2, opacity: 0.6 }}
