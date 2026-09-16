@@ -65,6 +65,8 @@ const convertApiCardToLocalCard = (
 const RULE_LABELS: Partial<Record<MatchRule, string>> = {
   Same: 'SAME',
   Plus: 'PLUS',
+  SameWall: 'SAME WALL',
+  PlusWall: 'PLUS WALL',
 };
 
 // Unknown rule names fall back to their upper-cased name so new backend rules still show up.

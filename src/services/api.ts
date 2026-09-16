@@ -35,7 +35,8 @@ export interface LocalCard {
 }
 
 // Special rules that can be enabled on a match (mirrors the backend MatchRule enum).
-export type MatchRule = 'Same' | 'Plus';
+// SAME WALL / PLUS WALL make the board's outer wall count as an A (10) card for SAME / PLUS respectively.
+export type MatchRule = 'Same' | 'Plus' | 'SameWall' | 'PlusWall';
 
 // Rules the UI enables by default when it creates a match (Quick Match).
 // 👉 To revert to basic-rules-only matches, set this to [] — nothing else needs to change.
