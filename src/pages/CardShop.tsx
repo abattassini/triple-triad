@@ -14,12 +14,10 @@ const cardArtUrl = (image: string) => `/triple-triad/images/cards/${image}`;
 // The pack itself is drawn with the seeded deck's card back.
 const PACK_ART = cardArtUrl('ff8-deck/back.png');
 
-// Level 1 is the most likely draw (~11.8 %), so the bars are scaled against a 12 % ceiling.
-const MAX_LEVEL_CHANCE = 12;
-
 /**
- * Card Shop: buy a pack of five cards for coins and see them opened. The price, pack size and level odds
- * come from the backend (`GET /api/shop/pack`) so the page can never disagree with what a purchase does.
+ * Card Shop: buy a pack of five cards for coins and see them opened. The price and pack size come from the
+ * backend (`GET /api/shop/pack`) so the page can never disagree with what a purchase does; the level odds
+ * the same endpoint reports are deliberately not shown here.
  */
 export const CardShop: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -28,7 +26,6 @@ export const CardShop: React.FC = () => {
   const [offer, setOffer] = useState<PackOffer | null>(null);
   const [opened, setOpened] = useState<PackCard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isLoadingOffer, setIsLoadingOffer] = useState(true);
   const [isBuying, setIsBuying] = useState(false);
 
   useEffect(() => {
@@ -43,10 +40,6 @@ export const CardShop: React.FC = () => {
       } catch (loadError) {
         if (!cancelled) {
           setError((loadError as Error).message);
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingOffer(false);
         }
       }
     };
@@ -101,7 +94,7 @@ export const CardShop: React.FC = () => {
             </Alert>
           )}
 
-          <Box className="card-shop-panels">
+          <Box className="card-shop-pack">
             <Paper elevation={3} className="pack-card">
               <img className="pack-card__art" src={PACK_ART} alt="Card pack" />
               <Typography variant="h5" className="pack-card__title">
@@ -130,37 +123,6 @@ export const CardShop: React.FC = () => {
                   You need {(offer.price - coins).toLocaleString()} more coins — win matches to earn
                   them.
                 </Typography>
-              )}
-            </Paper>
-
-            <Paper elevation={3} className="odds-card">
-              <Typography variant="h6" className="odds-card__title">
-                Level odds
-              </Typography>
-              <Typography variant="body2" className="odds-card__caption">
-                The level is drawn first — chance (600 − 20x) / 49 percent — then a card of that
-                level is picked at random.
-              </Typography>
-
-              {offer === null ? (
-                <Box className="odds-card__loading">
-                  {isLoadingOffer && <CircularProgress size={24} />}
-                </Box>
-              ) : (
-                <Box className="odds-card__rows">
-                  {offer.levelOdds.map(odds => (
-                    <Box key={odds.level} className="odds-row">
-                      <span className="odds-row__level">Lv {odds.level}</span>
-                      <span className="odds-row__bar">
-                        <span
-                          className="odds-row__fill"
-                          style={{ width: `${(odds.chancePercent / MAX_LEVEL_CHANCE) * 100}%` }}
-                        />
-                      </span>
-                      <span className="odds-row__chance">{odds.chancePercent.toFixed(2)}%</span>
-                    </Box>
-                  ))}
-                </Box>
               )}
             </Paper>
           </Box>
