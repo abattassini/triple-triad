@@ -2,14 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, CircularProgress, Container, Paper, Typography } from '@mui/material';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import { CardTile } from '../components/CardTile';
+import { cardArtUrl } from '../data/CardArt';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { PlayerStats } from '../components/PlayerStats';
 import { apiService, type PackCard, type PackOffer } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import './CardShop.scss';
-
-// Card art is served from the frontend's public folder (Vite base is `/triple-triad/`).
-const cardArtUrl = (image: string) => `/triple-triad/images/cards/${image}`;
 
 // The pack itself is drawn with the seeded deck's card back.
 const PACK_ART = cardArtUrl('ff8-deck/back.png');
@@ -135,30 +134,15 @@ export const CardShop: React.FC = () => {
 
               <Box className="pack-reveal__cards">
                 {opened.map((card, index) => (
-                  <Box
+                  <CardTile
                     key={`${card.id}-${index}`}
-                    className="pack-reveal__card"
-                    style={{ animationDelay: `${index * 120}ms` }}
-                  >
-                    <img
-                      className="pack-reveal__art"
-                      src={cardArtUrl(card.image)}
-                      alt={card.name}
-                    />
-                    <span className="pack-reveal__name">{card.name}</span>
-                    <span className="pack-reveal__meta">
-                      <span className="pack-reveal__level">Lv {card.level ?? '?'}</span>
-                      <span
-                        className={
-                          card.isNew
-                            ? 'pack-reveal__badge pack-reveal__badge--new'
-                            : 'pack-reveal__badge'
-                        }
-                      >
-                        {card.isNew ? 'NEW' : `×${card.quantityOwned}`}
-                      </span>
-                    </span>
-                  </Box>
+                    image={card.image}
+                    name={card.name}
+                    level={card.level}
+                    quantity={card.quantityOwned}
+                    isNew={card.isNew}
+                    animationDelayMs={index * 120}
+                  />
                 ))}
               </Box>
 
@@ -169,6 +153,15 @@ export const CardShop: React.FC = () => {
                 disabled={!canAfford || isBuying}
               >
                 Buy another pack
+              </Button>
+
+              <Button
+                variant="text"
+                color="inherit"
+                className="pack-reveal__link"
+                onClick={() => navigate('/cards')}
+              >
+                View my cards
               </Button>
             </Paper>
           )}

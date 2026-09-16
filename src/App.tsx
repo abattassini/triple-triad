@@ -4,6 +4,7 @@ import './App.css';
 import { Landing } from './pages/Landing';
 import { Lobby } from './pages/Lobby';
 import { CardShop } from './pages/CardShop';
+import { MyCards } from './pages/MyCards';
 import { MatchPage } from './pages/MatchPage';
 import { AccountCreation } from './pages/AccountCreation';
 import { SignIn } from './pages/SignIn';
@@ -97,6 +98,14 @@ function App() {
           element={
             <ProtectedRoute>
               <CardShop />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cards"
+          element={
+            <ProtectedRoute>
+              <MyCards />
             </ProtectedRoute>
           }
         />

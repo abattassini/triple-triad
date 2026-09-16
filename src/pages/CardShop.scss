@@ -110,72 +110,15 @@
     gap: 1rem;
   }
 
-  &__card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.75rem 0.5rem;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(74, 158, 255, 0.25);
-    // Staggered reveal: the per-card delay is set inline by the page.
-    animation: pack-reveal-in 420ms ease-out both;
-  }
-
-  &__art {
-    width: 100%;
-    max-width: 96px;
-    border-radius: 6px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-  }
-
-  &__name {
-    color: #fff;
-    font-size: 0.8rem;
-    font-weight: 600;
-  }
-
-  &__meta {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  &__level {
-    color: rgba(255, 255, 255, 0.6);
-    font-size: 0.75rem;
-  }
-
-  &__badge {
-    padding: 0.1rem 0.4rem;
-    border-radius: 999px;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.75);
-    background: rgba(255, 255, 255, 0.12);
-
-    &--new {
-      color: #0d1b2a;
-      background: #ffd166;
-    }
-  }
-
   &__again {
     margin-top: 1.25rem;
     border-color: #4a9eff !important;
     color: #4a9eff !important;
   }
-}
 
-@keyframes pack-reveal-in {
-  from {
-    opacity: 0;
-    transform: translateY(14px) scale(0.92);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
+  &__link {
+    display: block;
+    margin: 0.5rem auto 0;
+    color: rgba(255, 255, 255, 0.6) !important;
   }
 }

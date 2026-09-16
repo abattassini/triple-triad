@@ -172,6 +172,27 @@ export const Lobby: React.FC = () => {
 
             <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>
               <Typography variant="h5" sx={{ color: '#4a9eff', mb: 1 }}>
+                🃏 My Cards
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#ccc', mb: 2 }}>
+                See the cards you own, grouped by level
+              </Typography>
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                onClick={() => navigate('/cards')}
+                sx={{
+                  backgroundColor: '#4a9eff',
+                  '&:hover': { backgroundColor: '#3a8eef' },
+                }}
+              >
+                My Cards
+              </Button>
+            </Paper>
+
+            <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>
+              <Typography variant="h5" sx={{ color: '#4a9eff', mb: 1 }}>
                 🛒 Card Shop
               </Typography>
               <Typography variant="body2" sx={{ color: '#ccc', mb: 2 }}>
