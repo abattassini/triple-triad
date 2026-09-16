@@ -171,12 +171,27 @@ export interface PackPurchaseResponse {
   cards: PackCard[];
 }
 
-// One entry of the player's collection (api/player/cards). No screen reads this yet.
+// One entry of the player's collection (api/player/cards).
 export interface OwnedCard {
   card: Card;
   quantity: number;
   firstAcquiredAt: string;
   lastAcquiredAt: string;
+}
+
+// One level of a player's collection: how many distinct cards they hold there and how many the catalogue has.
+export interface OwnedCardLevel {
+  level: number;
+  ownedCount: number;
+  totalCount: number;
+}
+
+// The collection at a glance — the page header totals plus the levels that have a card in them (this is what
+// fills the level picker, so the page never has to load the whole collection).
+export interface CollectionSummary {
+  distinctCards: number;
+  copiesOwned: number;
+  levels: OwnedCardLevel[];
 }
 
 class ApiService {
@@ -339,13 +354,27 @@ class ApiService {
     return response.json();
   }
 
-  // The signed-in player's collection (endpoint only for now — no screen reads it yet).
-  async getMyCards(): Promise<OwnedCard[]> {
-    const response = await fetch(`${API_BASE_URL}/api/player/cards`, {
+  // The signed-in player's collection, optionally narrowed to a single card level — the My Cards page loads
+  // one level at a time, on demand.
+  async getMyCards(level?: number): Promise<OwnedCard[]> {
+    const query = level === undefined ? '' : `?level=${level}`;
+    const response = await fetch(`${API_BASE_URL}/api/player/cards${query}`, {
       headers: getAuthHeaders(),
     });
     if (!response.ok) {
       throw new Error('Failed to load your cards');
+    }
+    return response.json();
+  }
+
+  // The collection at a glance: header totals plus one row per level the player owns cards in. Drives the
+  // level picker without loading a single card.
+  async getCollectionSummary(): Promise<CollectionSummary> {
+    const response = await fetch(`${API_BASE_URL}/api/player/cards/summary`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to load your collection');
     }
     return response.json();
   }

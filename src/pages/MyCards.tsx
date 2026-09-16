@@ -1,52 +1,52 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Alert, Box, Button, CircularProgress, Container, Paper, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  MenuItem,
+  Paper,
+  TextField,
+  Typography,
+} from '@mui/material';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import { CardTile } from '../components/CardTile';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { PlayerStats } from '../components/PlayerStats';
-import { apiService, type Card, type OwnedCard } from '../services/api';
+import { apiService, type CollectionSummary, type OwnedCard } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import './MyCards.scss';
 
-// One level of the collection: the cards of that level the player owns, and how much of the level that is.
-interface LevelSection {
-  level: number;
-  cards: OwnedCard[];
-  ownedCount: number;
-  totalCount: number;
-}
-
 /**
- * My Cards: the cards the player owns, classified by card level (1 → 10). Only levels the player owns cards in
- * get a section, so the page grows with the collection; each section shows `owned of total` for that level and
- * duplicates are folded into a `×N` badge.
+ * My Cards: the cards the player owns, classified by level and shown **one level at a time**.
  *
- * Both the grouping and the totals are derived here: the collection endpoint returns a flat list and the public
- * catalogue (`getAllCards`) supplies how many cards exist per level.
+ * Only the per-level summary (a handful of counts) is loaded up front; the cards themselves are fetched when
+ * the level picker changes, so the page never pulls the whole collection. Levels the player owns nothing in
+ * are not offered, and the cards inside a level are listed by name.
  */
 export const MyCards: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [owned, setOwned] = useState<OwnedCard[]>([]);
-  const [catalogue, setCatalogue] = useState<Card[]>([]);
+  const [summary, setSummary] = useState<CollectionSummary | null>(null);
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+  const [cards, setCards] = useState<OwnedCard[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(true);
+  const [isLoadingCards, setIsLoadingCards] = useState(false);
 
+  // The per-level summary is all that is needed to land the page, on the lowest level the player owns.
   useEffect(() => {
     let cancelled = false;
 
-    const load = async () => {
+    const loadSummary = async () => {
       try {
-        const [myCards, allCards] = await Promise.all([
-          apiService.getMyCards(),
-          apiService.getAllCards(),
-        ]);
-
+        const loaded = await apiService.getCollectionSummary();
         if (!cancelled) {
-          setOwned(myCards);
-          setCatalogue(allCards);
+          setSummary(loaded);
+          setSelectedLevel(loaded.levels[0]?.level ?? null);
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -54,69 +54,74 @@ export const MyCards: React.FC = () => {
         }
       } finally {
         if (!cancelled) {
-          setIsLoading(false);
+          setIsLoadingSummary(false);
         }
       }
     };
 
-    load();
+    loadSummary();
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // How many cards the catalogue holds per level, so a section can read "6 of 27".
-  const levelTotals = useMemo(() => {
-    const totals = new Map<number, number>();
+  // Fetches only the picked level, every time the picker changes.
+  useEffect(() => {
+    if (selectedLevel === null) {
+      setCards([]);
+      return;
+    }
 
-    catalogue.forEach(card => {
-      const level = card.level ?? 0;
-      totals.set(level, (totals.get(level) ?? 0) + 1);
-    });
+    let cancelled = false;
+    setIsLoadingCards(true);
 
-    return totals;
-  }, [catalogue]);
+    apiService
+      .getMyCards(selectedLevel)
+      .then(rows => {
+        if (!cancelled) {
+          setCards([...rows].sort((left, right) => left.card.name.localeCompare(right.card.name)));
+        }
+      })
+      .catch((loadError: Error) => {
+        if (!cancelled) {
+          setError(loadError.message);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setIsLoadingCards(false);
+        }
+      });
 
-  // The collection grouped by level (ascending), each level's cards sorted by name.
-  const sections = useMemo<LevelSection[]>(() => {
-    const byLevel = new Map<number, OwnedCard[]>();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedLevel]);
 
-    owned.forEach(row => {
-      const level = row.card.level ?? 0;
-      const rows = byLevel.get(level) ?? [];
-      rows.push(row);
-      byLevel.set(level, rows);
-    });
+  const levels = summary?.levels ?? [];
+  const selected = levels.find(row => row.level === selectedLevel) ?? null;
+  const hasCards = levels.length > 0;
 
-    return [...byLevel.entries()]
-      .sort(([left], [right]) => left - right)
-      .map(([level, rows]) => ({
-        level,
-        cards: [...rows].sort((left, right) => left.card.name.localeCompare(right.card.name)),
-        ownedCount: rows.length,
-        totalCount: levelTotals.get(level) ?? rows.length,
-      }));
-  }, [owned, levelTotals]);
-
-  const distinctOwned = owned.length;
-  const copiesOwned = owned.reduce((total, row) => total + row.quantity, 0);
-  const hasCards = sections.length > 0;
+  const handleLevelChange = (level: number) => {
+    setError(null);
+    setSelectedLevel(level);
+  };
 
   return (
     <Box className="my-cards">
       <HamburgerMenu />
 
-      <Container maxWidth="lg" className="my-cards-container">
+      <Container maxWidth={false} className="my-cards-container">
         <Box className="my-cards-content">
           <Typography variant="h4" className="my-cards-title">
             🃏 My Cards
           </Typography>
           <Typography variant="body1" className="my-cards-subtitle">
-            {isLoading
+            {isLoadingSummary
               ? 'Loading your collection…'
               : hasCards
-                ? `${distinctOwned} distinct cards · ${copiesOwned} copies owned`
+                ? `${summary?.distinctCards ?? 0} distinct cards · ${summary?.copiesOwned ?? 0} copies owned`
                 : 'Your collection is empty'}
           </Typography>
 
@@ -128,36 +133,66 @@ export const MyCards: React.FC = () => {
             </Alert>
           )}
 
-          {isLoading ? (
+          {isLoadingSummary ? (
             <Box className="my-cards-loading">
               <CircularProgress sx={{ color: '#4a9eff' }} />
             </Box>
           ) : hasCards ? (
-            <Box className="my-cards-levels">
-              {sections.map(section => (
-                <Paper key={section.level} elevation={3} className="level-section">
-                  <Box className="level-section__header">
-                    <span className="level-section__title">Level {section.level}</span>
-                    <span className="level-section__count">
-                      {section.ownedCount} of {section.totalCount}
-                    </span>
-                  </Box>
+            <>
+              <Box className="my-cards-picker">
+                <TextField
+                  select
+                  size="small"
+                  label="Level"
+                  className="my-cards-picker__select"
+                  value={selectedLevel ?? ''}
+                  disabled={isLoadingCards}
+                  onChange={event => handleLevelChange(Number(event.target.value))}
+                >
+                  {levels.map(row => (
+                    <MenuItem key={row.level} value={row.level}>
+                      {`Level ${row.level} — ${row.ownedCount} of ${row.totalCount}`}
+                    </MenuItem>
+                  ))}
+                </TextField>
 
+                <Typography variant="body2" className="my-cards-picker__hint">
+                  {isLoadingCards
+                    ? 'Loading cards…'
+                    : selected
+                      ? `Showing the ${selected.ownedCount} cards you own at level ${selected.level}`
+                      : ''}
+                </Typography>
+              </Box>
+
+              <Paper elevation={3} className="level-section">
+                {isLoadingCards ? (
+                  <Box className="level-section__loading">
+                    <CircularProgress size={28} sx={{ color: '#4a9eff' }} />
+                  </Box>
+                ) : (
                   <Box className="level-section__cards">
-                    {section.cards.map((row, index) => (
+                    {cards.map((row, index) => (
                       <CardTile
                         key={row.card.id}
                         image={row.card.image}
                         name={row.card.name}
-                        level={row.card.level}
                         quantity={row.quantity > 1 ? row.quantity : undefined}
-                        animationDelayMs={index * 40}
+                        animationDelayMs={index * 30}
                       />
                     ))}
                   </Box>
-                </Paper>
-              ))}
-            </Box>
+                )}
+              </Paper>
+
+              <Button
+                variant="outlined"
+                className="my-cards-shop"
+                onClick={() => navigate('/shop')}
+              >
+                Buy more cards
+              </Button>
+            </>
           ) : (
             <Paper elevation={3} className="my-cards-empty">
               <Typography variant="h6" className="my-cards-empty__title">
@@ -176,12 +211,6 @@ export const MyCards: React.FC = () => {
                 Go to the Card Shop
               </Button>
             </Paper>
-          )}
-
-          {hasCards && !isLoading && (
-            <Button variant="outlined" className="my-cards-shop" onClick={() => navigate('/shop')}>
-              Buy more cards
-            </Button>
           )}
 
           <Button
