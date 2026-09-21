@@ -15,6 +15,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import HomeIcon from '@mui/icons-material/Home';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import StyleIcon from '@mui/icons-material/Style';
+import RedeemIcon from '@mui/icons-material/Redeem';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -44,6 +45,7 @@ export const HamburgerMenu: React.FC = () => {
   const menuItems = [
     { text: 'Lobby', icon: <HomeIcon />, path: '/lobby' },
     { text: 'My Cards', icon: <StyleIcon />, path: '/cards' },
+    { text: 'My Packs', icon: <RedeemIcon />, path: '/packs' },
     { text: 'Card Shop', icon: <StorefrontIcon />, path: '/shop' },
   ];
 

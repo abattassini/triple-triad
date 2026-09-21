@@ -5,6 +5,7 @@ import { Landing } from './pages/Landing';
 import { Lobby } from './pages/Lobby';
 import { CardShop } from './pages/CardShop';
 import { MyCards } from './pages/MyCards';
+import { MyPacks } from './pages/MyPacks';
 import { MatchPage } from './pages/MatchPage';
 import { AccountCreation } from './pages/AccountCreation';
 import { SignIn } from './pages/SignIn';
@@ -106,6 +107,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MyCards />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/packs"
+          element={
+            <ProtectedRoute>
+              <MyPacks />
             </ProtectedRoute>
           }
         />

@@ -1,51 +1,57 @@
-.card-shop {
+/* `App.css` makes `.app` a column flex box with `align-items: center`, so a page shell shrinks to its content
+   instead of filling the viewport. Claiming the full width here is what lets the pack panel centre itself. */
+.my-packs {
+  align-self: stretch;
+  width: 100%;
   min-height: 100vh;
   padding-top: 80px; // Space for the hamburger menu
 }
 
-.card-shop-container {
+.my-packs-container {
+  width: 100%;
   max-width: 1100px;
 }
 
-.card-shop-content {
-  .card-shop-title {
+.my-packs-content {
+  .my-packs-title {
     color: #fff;
     text-align: center;
     font-weight: 700;
     margin-bottom: 0.5rem;
   }
 
-  .card-shop-subtitle {
+  .my-packs-subtitle {
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
     margin-bottom: 1.5rem;
   }
 
-  .card-shop-stats {
+  .my-packs-stats {
     max-width: 560px;
     margin: 0 auto 1.5rem;
   }
 
-  .card-shop-alert {
+  .my-packs-alert {
     max-width: 720px;
     margin: 0 auto 1.5rem;
   }
 
-  /* The pack is the only panel on the page, so it sits centered. */
-  .card-shop-pack {
+  .my-packs-loading {
     display: flex;
     justify-content: center;
+    padding: 2rem 0;
   }
 
-  .card-shop-back {
+  .my-packs-back {
     display: block;
     margin: 2rem auto 3rem;
     color: rgba(255, 255, 255, 0.6);
   }
 }
 
-/* ── The pack ─────────────────────────────────────────────────── */
-.pack-card {
+/* ── The pack waiting to be opened ────────────────────────────────────── */
+.pack-inventory {
+  display: block;
   background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
   border: 2px solid #3a3a5e;
   border-radius: 12px !important;
@@ -53,6 +59,7 @@
   text-align: center;
   width: 100%;
   max-width: 340px;
+  margin: 0 auto;
 
   &__art {
     width: 120px;
@@ -71,7 +78,7 @@
     margin-bottom: 1.25rem;
   }
 
-  &__buy {
+  &__open {
     background-color: #4a9eff !important;
 
     &:hover {
@@ -85,42 +92,36 @@
   }
 
   &__hint {
-    color: #ffb86b;
+    color: rgba(255, 255, 255, 0.5);
     margin-top: 0.75rem;
   }
 }
 
-/* ── Packs waiting to be opened ───────────────────────────────── */
-.pack-wallet {
+/* Shown when the player holds no packs. */
+.my-packs-empty {
   background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
   border: 2px solid #3a3a5e;
   border-radius: 12px !important;
-  padding: 1.25rem 1.5rem;
-  margin: 2rem auto 0;
-  max-width: 480px;
+  padding: 2rem 1.5rem;
   text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
 
   &__title {
-    color: #ffd166;
-    margin-bottom: 0.35rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
   }
 
   &__caption {
     color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
   }
 
-  &__open {
+  &__buy {
     background-color: #4a9eff !important;
 
     &:hover {
       background-color: #3a8eef !important;
     }
-  }
-
-  &__link {
-    display: block;
-    margin: 0.5rem auto 0;
-    color: rgba(255, 255, 255, 0.6) !important;
   }
 }

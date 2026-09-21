@@ -1,5 +1,6 @@
 import { Avatar, Box, LinearProgress, Paper, Typography } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
+import { useNavigate } from 'react-router-dom';
 import type { Player } from '../services/api';
 import './PlayerStats.scss';
 
@@ -36,6 +37,47 @@ const CoinsPill: React.FC<{ coins: number }> = ({ coins }) => (
       🪙
     </span>
     <span className="player-stats__coin-value">{coins.toLocaleString()}</span>
+  </Box>
+);
+
+/**
+ * One countable good as a link pill: the card count opens My Cards and the pack count opens My Packs, so every
+ * screen that already shows the profile is also an entry point to those pages. Styled as a button (hover lift,
+ * pointer, focus ring) because that is exactly what it is.
+ */
+const GoodsPill: React.FC<{ icon: string; value: number; label: string; to: string }> = ({
+  icon,
+  value,
+  label,
+  to,
+}) => {
+  const navigate = useNavigate();
+
+  return (
+    <Box
+      component="button"
+      type="button"
+      className={`player-stats__goods player-stats__goods--${label}`}
+      onClick={() => navigate(to)}
+      aria-label={`${value.toLocaleString()} ${label} — open my ${label}`}
+      title={`Go to my ${label}`}
+    >
+      <span className="player-stats__goods-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="player-stats__goods-value">{value.toLocaleString()}</span>
+    </Box>
+  );
+};
+
+/**
+ * The two goods pills, driven by the counts the profile reports. A profile cached in `localStorage` before those
+ * fields existed reads 0 until the next refresh rather than rendering `undefined`.
+ */
+const GoodsRow: React.FC<{ player: Player }> = ({ player }) => (
+  <Box className="player-stats__goods-row">
+    <GoodsPill icon="🃏" value={player.cardsOwned ?? 0} label="cards" to="/cards" />
+    <GoodsPill icon="🎁" value={player.packsOwned ?? 0} label="packs" to="/packs" />
   </Box>
 );
 
@@ -124,7 +166,10 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
         <AvatarBadge player={player} size={32} />
         <Box className="player-stats__compact-info">
           <span className="player-stats__compact-name">{player.login}</span>
-          <CoinsPill coins={player.coins} />
+          <Box className="player-stats__compact-pills">
+            <CoinsPill coins={player.coins} />
+            <GoodsRow player={player} />
+          </Box>
         </Box>
       </Box>
     );
@@ -138,6 +183,7 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
           {player.login}
         </Typography>
         <CoinsPill coins={player.coins} />
+        <GoodsRow player={player} />
         <XpBlock player={player} />
         <RecordRows player={player} />
       </Paper>
@@ -156,6 +202,7 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
         </Box>
         <CoinsPill coins={player.coins} />
       </Box>
+      <GoodsRow player={player} />
       <StatTiles player={player} />
     </Paper>
   );

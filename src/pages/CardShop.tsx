@@ -2,28 +2,27 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, CircularProgress, Container, Paper, Typography } from '@mui/material';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
-import { CardTile } from '../components/CardTile';
-import { cardArtUrl } from '../data/CardArt';
+import RedeemIcon from '@mui/icons-material/Redeem';
+import { cardBackUrl } from '../data/CardArt';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { PlayerStats } from '../components/PlayerStats';
-import { apiService, type PackCard, type PackOffer } from '../services/api';
+import { apiService, type PackOffer } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import './CardShop.scss';
 
-// The pack itself is drawn with the seeded deck's card back.
-const PACK_ART = cardArtUrl('ff8-deck/back.png');
-
 /**
- * Card Shop: buy a pack of five cards for coins and see them opened. The price and pack size come from the
- * backend (`GET /api/shop/pack`) so the page can never disagree with what a purchase does; the level odds
- * the same endpoint reports are deliberately not shown here.
+ * Card Shop: buy a pack of five cards for coins. A purchase puts the **pack** in the player's inventory — the
+ * cards are drawn and filed when it is opened on **My Packs**, so this page has no reveal of its own. The price
+ * and pack size come from the backend (`GET /api/shop/pack`) so the page can never disagree with what a purchase
+ * does; the level odds the same endpoint reports are deliberately not shown here.
  */
 export const CardShop: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   const [offer, setOffer] = useState<PackOffer | null>(null);
-  const [opened, setOpened] = useState<PackCard[] | null>(null);
+  // How many unopened packs the player has: read from the offer on load, then kept in step by the purchases.
+  const [packsOwned, setPacksOwned] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isBuying, setIsBuying] = useState(false);
 
@@ -35,6 +34,7 @@ export const CardShop: React.FC = () => {
         const packOffer = await apiService.getPackOffer();
         if (!cancelled) {
           setOffer(packOffer);
+          setPacksOwned(packOffer.packsOwned);
         }
       } catch (loadError) {
         if (!cancelled) {
@@ -56,12 +56,11 @@ export const CardShop: React.FC = () => {
   const handleBuy = useCallback(async () => {
     setIsBuying(true);
     setError(null);
-    setOpened(null);
 
     try {
       const purchase = await apiService.buyPack();
-      setOpened(purchase.cards);
-      // The wallet lives in the auth context, so re-read the profile to refresh every coin pill.
+      setPacksOwned(purchase.packsOwned);
+      // The wallet lives in the auth context, so re-read the profile to refresh every coin/pack pill.
       await refreshUser();
     } catch (buyError) {
       setError((buyError as Error).message);
@@ -81,7 +80,7 @@ export const CardShop: React.FC = () => {
           </Typography>
           <Typography variant="body1" className="card-shop-subtitle">
             {offer
-              ? `${offer.cardCount} random cards for ${offer.price.toLocaleString()} coins`
+              ? `${offer.cardCount} random cards for ${offer.price.toLocaleString()} coins — the pack lands in My Packs, open it whenever you like`
               : 'Loading the pack…'}
           </Typography>
 
@@ -95,7 +94,7 @@ export const CardShop: React.FC = () => {
 
           <Box className="card-shop-pack">
             <Paper elevation={3} className="pack-card">
-              <img className="pack-card__art" src={PACK_ART} alt="Card pack" />
+              <img className="pack-card__art" src={cardBackUrl()} alt="Card pack" />
               <Typography variant="h5" className="pack-card__title">
                 Card Pack
               </Typography>
@@ -126,39 +125,31 @@ export const CardShop: React.FC = () => {
             </Paper>
           </Box>
 
-          {opened && (
-            <Paper elevation={3} className="pack-reveal">
-              <Typography variant="h6" className="pack-reveal__title">
-                You unpacked {opened.length} cards
+          {packsOwned > 0 && (
+            <Paper elevation={3} className="pack-wallet">
+              <Typography variant="h6" className="pack-wallet__title">
+                {packsOwned === 1 ? '1 pack waiting' : `${packsOwned} packs waiting`}
               </Typography>
 
-              <Box className="pack-reveal__cards">
-                {opened.map((card, index) => (
-                  <CardTile
-                    key={`${card.id}-${index}`}
-                    image={card.image}
-                    name={card.name}
-                    level={card.level}
-                    quantity={card.quantityOwned}
-                    isNew={card.isNew}
-                    animationDelayMs={index * 120}
-                  />
-                ))}
-              </Box>
+              <Typography variant="body2" className="pack-wallet__caption">
+                The cards are drawn when you open the pack — every pack holds{' '}
+                {offer?.cardCount ?? 5}.
+              </Typography>
 
               <Button
-                variant="outlined"
-                className="pack-reveal__again"
-                onClick={handleBuy}
-                disabled={!canAfford || isBuying}
+                variant="contained"
+                size="large"
+                className="pack-wallet__open"
+                startIcon={<RedeemIcon />}
+                onClick={() => navigate('/packs')}
               >
-                Buy another pack
+                Open my packs
               </Button>
 
               <Button
                 variant="text"
                 color="inherit"
-                className="pack-reveal__link"
+                className="pack-wallet__link"
                 onClick={() => navigate('/cards')}
               >
                 View my cards

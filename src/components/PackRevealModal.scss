@@ -1,0 +1,302 @@
+/* The pack reveal: the page dims (the MUI backdrop) but the dialog has no surface of its own, so the five
+   face-down cards are the only thing on screen. The flip is pure CSS — a single `--flipped` class drives the
+   rotation, the light burst and the shine sweep, so nothing has to be kept in sync with a timer. */
+.pack-reveal-dialog {
+  padding: 1rem 0.5rem 2rem;
+  color: #fff;
+
+  &__title {
+    text-align: center;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
+  }
+
+  &__hint {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 0.35rem;
+  }
+
+  &__cards {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.85rem;
+    justify-items: center;
+    margin-top: 1.5rem;
+
+    /* Two rows of cards on a phone rather than five unreadable slivers. */
+    @media (max-width: 700px) {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.6rem;
+    }
+  }
+
+  /* Bottom centre, under the cards. */
+  &__footer {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.75rem;
+    animation: pack-continue-in 320ms ease-out both;
+  }
+
+  &__continue {
+    padding: 0.7rem 2.75rem;
+    font-weight: 700;
+    background-color: #4a9eff !important;
+    box-shadow: 0 10px 30px rgba(74, 158, 255, 0.45);
+
+    &:hover {
+      background-color: #3a8eef !important;
+    }
+  }
+}
+
+/* ── One card: face-down art that flips into the real card ─────────────────────────────────────────────── */
+.pack-reveal-card {
+  position: relative;
+  width: 100%;
+  max-width: 190px;
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  perspective: 1200px;
+  /* `backwards` (not `both`): the dealt-in transform must be released, or it would fight the hover lift. */
+  animation: pack-card-deal 420ms ease-out backwards;
+  transition:
+    transform 200ms ease,
+    filter 200ms ease;
+
+  /* Hover, while the card is still face-down: the lift-and-glow a button gives, in the page's accent. */
+  &:not(.pack-reveal-card--flipped):hover {
+    transform: translateY(-8px) scale(1.035);
+    filter: drop-shadow(0 0 16px rgba(74, 158, 255, 0.7));
+
+    .pack-reveal-card__face--back {
+      border-color: #4a9eff;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4a9eff;
+    outline-offset: 4px;
+  }
+
+  &__inner {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 780ms cubic-bezier(0.2, 0.9, 0.25, 1.12);
+  }
+
+  &--flipped &__inner {
+    transform: rotateY(180deg);
+  }
+
+  &__face {
+    position: absolute;
+    inset: 0;
+    display: block;
+    overflow: hidden;
+    border-radius: 10px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+
+    img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    &--back {
+      border: 2px solid #3a3a5e;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+      transition: border-color 200ms ease;
+    }
+
+    &--front {
+      /* Pre-rotated, so it reads the right way round once its parent has turned 180°. */
+      transform: rotateY(180deg);
+      border: 2px solid #4a9eff;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.6);
+    }
+  }
+  &__caption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 1.6rem 0.4rem 0.4rem;
+    background: linear-gradient(180deg, rgba(6, 8, 20, 0), rgba(6, 8, 20, 0.92));
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  &__name {
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+  }
+
+  &__level {
+    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.68rem;
+  }
+
+  &__badge {
+    padding: 0.05rem 0.35rem;
+    border-radius: 999px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.16);
+
+    &--new {
+      color: #0d1b2a;
+      background: #ffd166;
+    }
+  }
+}
+
+/* ── The light: a burst behind the card, a shine across it, a gold ring as it lands ─────────────────────── */
+.pack-reveal-card {
+  &__glow {
+    position: absolute;
+    inset: -38%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 214, 102, 0.9) 0%, rgba(255, 214, 102, 0) 62%);
+    opacity: 0;
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+
+  &--flipped &__glow {
+    animation: pack-glow-burst 900ms ease-out both;
+  }
+
+  &__shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      115deg,
+      rgba(255, 255, 255, 0) 32%,
+      rgba(255, 255, 255, 0.75) 50%,
+      rgba(255, 255, 255, 0) 68%
+    );
+    transform: translateX(-130%);
+    pointer-events: none;
+    mix-blend-mode: screen;
+  }
+
+  &--flipped &__shine {
+    animation: pack-shine-sweep 900ms 170ms ease-out both;
+  }
+
+  /* Timed to peak as the 780ms flip finishes. */
+  &--flipped &__face--front {
+    animation: pack-landed-ring 800ms 420ms ease-out both;
+  }
+}
+
+/* Only a `from`, so the dealt-in transform is released afterwards and cannot fight the hover lift. */
+@keyframes pack-card-deal {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.9);
+  }
+}
+
+@keyframes pack-glow-burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.45);
+  }
+
+  35% {
+    opacity: 0.95;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.55);
+  }
+}
+
+@keyframes pack-shine-sweep {
+  from {
+    transform: translateX(-130%);
+  }
+
+  to {
+    transform: translateX(130%);
+  }
+}
+
+@keyframes pack-landed-ring {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(255, 214, 102, 0.85),
+      0 12px 34px rgba(0, 0, 0, 0.6);
+  }
+
+  60% {
+    box-shadow:
+      0 0 0 16px rgba(255, 214, 102, 0),
+      0 12px 34px rgba(0, 0, 0, 0.6);
+  }
+
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(255, 214, 102, 0),
+      0 12px 34px rgba(0, 0, 0, 0.6);
+  }
+}
+
+@keyframes pack-continue-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/* Motion-sensitive players get the same reveal without the movement: the cards simply appear. */
+@media (prefers-reduced-motion: reduce) {
+  .pack-reveal-card {
+    animation: none;
+
+    &__inner {
+      transition: none;
+    }
+
+    &__glow,
+    &__shine {
+      display: none;
+      animation: none;
+    }
+
+    &--flipped .pack-reveal-card__face--front {
+      animation: none;
+    }
+  }
+
+  .pack-reveal-dialog__footer {
+    animation: none;
+  }
+}

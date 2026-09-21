@@ -41,6 +41,76 @@
     line-height: 1;
   }
 
+  // ---- goods pills (cards / packs) — these are buttons, so they get a real hover/focus state ----
+  &__goods-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  &__goods {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(74, 158, 255, 0.12);
+    border: 1px solid rgba(74, 158, 255, 0.4);
+    color: #4a9eff;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.3;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease;
+
+    &:hover {
+      background: rgba(74, 158, 255, 0.22);
+      border-color: #4a9eff;
+      color: #7ab8ff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(74, 158, 255, 0.25);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #4a9eff;
+      outline-offset: 2px;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    &--packs {
+      background: rgba(255, 209, 102, 0.12);
+      border-color: rgba(255, 209, 102, 0.4);
+      color: #ffd166;
+
+      &:hover {
+        background: rgba(255, 209, 102, 0.22);
+        border-color: #ffd166;
+        color: #ffe19a;
+        box-shadow: 0 4px 14px rgba(255, 209, 102, 0.22);
+      }
+    }
+
+    &-icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    &-value {
+      line-height: 1;
+    }
+  }
+
   // ---- XP ----
   &__xp-block {
     width: 100%;
@@ -178,6 +248,14 @@
     min-width: 0;
   }
 
+  // The drawer is narrow, so the coins and the two goods pills share one wrapping row.
+  &__compact-pills {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
   &__compact-name {
     font-size: 0.9rem;
     font-weight: 600;
@@ -191,5 +269,20 @@
   &--compact .player-stats__coins {
     padding: 0.15rem 0.5rem;
     font-size: 0.8rem;
+  }
+
+  // The drawer pills are deliberately smaller so coins, cards and packs fit on one wrapping row.
+  &--compact .player-stats__goods {
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8rem;
+
+    &-icon {
+      font-size: 0.85rem;
+    }
+  }
+
+  &--compact .player-stats__goods-row {
+    gap: 0.35rem;
+    margin-top: 0;
   }
 }

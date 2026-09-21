@@ -100,6 +100,11 @@ export interface Player {
   losses: number;
   ties: number;
   avatarUrl: string | null;
+  // How many distinct cards the player owns and how many unopened packs they hold — the two counts the
+  // PlayerStats pills show. Optional because a profile cached in localStorage before these fields existed
+  // is still valid; the UI falls back to 0.
+  cardsOwned?: number;
+  packsOwned?: number;
 }
 
 export interface SignInRequest {
@@ -153,6 +158,8 @@ export interface PackLevelOdds {
 export interface PackOffer {
   price: number;
   cardCount: number;
+  // How many of this pack the player already holds unopened (the shop shows it after a purchase).
+  packsOwned: number;
   levelOdds: PackLevelOdds[];
 }
 
@@ -164,11 +171,29 @@ export interface PackCard extends Card {
   isNew: boolean;
 }
 
+// Buying hands out a pack, not cards: the coins are charged and the pack goes to the inventory.
 export interface PackPurchaseResponse {
   success: boolean;
   price: number;
   coinsAfter: number;
+  packsOwned: number;
+}
+
+// Opening consumes one pack and returns the five cards it held — they are already filed in the collection by
+// the time this arrives, so the reveal is presentation only.
+export interface PackOpenResponse {
+  success: boolean;
+  packCode: string;
+  packsOwned: number;
   cards: PackCard[];
+}
+
+// One stack of unopened packs (api/shop/packs).
+export interface PackStack {
+  code: string;
+  name: string;
+  cardCount: number;
+  quantity: number;
 }
 
 // One entry of the player's collection (api/player/cards).
@@ -339,8 +364,8 @@ class ApiService {
     return response.json();
   }
 
-  // Buy a pack. The backend charges the coins and returns the cards it opened, or a 400 when
-  // the player cannot afford it (nothing is written in that case).
+  // Buy a pack. The backend charges the coins and adds a pack to the inventory — no cards are drawn here; they
+  // arrive when the pack is opened. A 400 means the player cannot afford it (nothing is written in that case).
   async buyPack(): Promise<PackPurchaseResponse> {
     const response = await fetch(`${API_BASE_URL}/api/shop/pack/purchase`, {
       method: 'POST',
@@ -350,6 +375,33 @@ class ApiService {
     if (!response.ok) {
       const error = await response.json().catch(() => null);
       throw new Error(error?.error || 'Failed to buy a pack');
+    }
+    return response.json();
+  }
+
+  // Open one of the packs the player holds. The backend consumes the pack, draws the cards, files them in the
+  // collection and returns them — the flip animation in the UI only replays cards the player already owns. A 400
+  // (no packs left) writes nothing.
+  async openPack(packCode?: string): Promise<PackOpenResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/shop/pack/open`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ packCode: packCode ?? null }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Failed to open the pack');
+    }
+    return response.json();
+  }
+
+  // The packs the player still holds, one entry per stack — what the My Packs page lists.
+  async getPackInventory(): Promise<PackStack[]> {
+    const response = await fetch(`${API_BASE_URL}/api/shop/packs`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to load your packs');
     }
     return response.json();
   }
