@@ -96,6 +96,79 @@
 
 /* Desktop (>=1200px, matches the game board's desktop breakpoint):
    sticky profile sidebar + action cards in the remaining column. */
+/* ── The Quick Match rule choice ─────────────────────────────────
+   Rendered inside `BareModal`, which supplies the darkened shell and the
+   missing surface; everything here is the modal's own content. */
+.lobby-rules-modal {
+  padding: 0.5rem;
+  text-align: center;
+  color: #fff;
+
+  &__title {
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
+  }
+
+  &__hint {
+    color: rgba(255, 255, 255, 0.75);
+    margin: 0.35rem 0 1.25rem;
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* Both options are two-line buttons: the label with its rules underneath. */
+  &__option {
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.9rem 1rem;
+    border-color: #4a9eff !important;
+    color: #4a9eff !important;
+
+    &:hover {
+      background: rgba(74, 158, 255, 0.12);
+    }
+
+    &--rules {
+      background-color: #4a9eff !important;
+      color: #fff !important;
+
+      &:hover {
+        background-color: #3a8eef !important;
+      }
+    }
+  }
+
+  &__option-label {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  &__option-caption {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+
+  &__cancel {
+    margin-top: 1rem;
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .lobby-rules-modal {
+    padding: 0 0.25rem;
+  }
+}
+
+/* Desktop (>=1200px, matches the game board's desktop breakpoint):
+   sticky profile sidebar + action cards in the remaining column. */
 @media (min-width: 1200px) {
   .lobby-stats-mobile {
     display: none;

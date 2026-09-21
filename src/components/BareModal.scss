@@ -1,0 +1,6 @@
+/* The content wrapper every BareModal renders around its children. The shell itself is transparent (see
+   BareModal.tsx for why the surface removal is done in `sx` and not here), so consumers bring their own layout;
+   this only fills the paper so grids inside can use the full width. */
+.bare-modal {
+  width: 100%;
+}

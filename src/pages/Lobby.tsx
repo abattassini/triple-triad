@@ -1,18 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Box, Typography, CircularProgress, Container, Button, Paper } from '@mui/material';
+import { BareModal } from '../components/BareModal';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { PlayerStats } from '../components/PlayerStats';
-import { apiService, DEFAULT_MATCH_RULES } from '../services/api';
+import { apiService, ALL_MATCH_RULES, type MatchRule } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
 import './Lobby.scss';
+
+/**
+ * Whether two rule sets are the same rules, regardless of order: the backend sends them in enum order while the
+ * client's constants may list them differently.
+ */
+const sameRuleSet = (left: MatchRule[], right: MatchRule[]): boolean =>
+  left.length === right.length && left.every(rule => right.includes(rule));
 
 export const Lobby: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const login = user?.login;
   const [isSearching, setIsSearching] = useState(false);
+  // The rules the player is waiting with, so the searching state can name them.
+  const [searchingRules, setSearchingRules] = useState<MatchRule[]>([]);
+  // Whether the "how do you want to play?" modal is open.
+  const [isChoosingRules, setIsChoosingRules] = useState(false);
   const { isConnected, on, off, joinMatch } = useSignalR();
 
   useEffect(() => {
@@ -54,37 +66,40 @@ export const Lobby: React.FC = () => {
     };
   }, [isConnected, login, navigate, on, off]);
 
-  const handleQuickMatch = async () => {
+  const startMatch = async (rules: MatchRule[]) => {
     if (!login || !isConnected) {
       alert('Please wait for connection...');
       return;
     }
 
+    // Close the choice first: from here the tile's searching state takes over.
+    setIsChoosingRules(false);
+    setSearchingRules(rules);
     setIsSearching(true);
 
     try {
-      // First, check if there's a waiting match
+      // Only a waiting match that plays by exactly these rules may be joined, so the option the player picked is
+      // the match they get; a waiting match with other rules (or none) means starting our own.
       const waitingMatches = await apiService.getWaitingMatches();
+      const compatible = waitingMatches.find(match => sameRuleSet(match.rules, rules));
 
-      if (waitingMatches.length > 0) {
-        // Join the first waiting match
-        const matchToJoin = waitingMatches[0];
-        const result = await apiService.joinMatch(matchToJoin.id);
-        // Join SignalR group
+      if (compatible) {
+        const result = await apiService.joinMatch(compatible.id);
+
+        // Join SignalR group, then go straight to the board.
         await joinMatch(result.match.id);
 
-        // Navigate to match immediately
         navigate(`/match/${result.match.id}`);
-      } else {
-        // Create a new match and wait for opponent (with the UI's default rules, see api.ts)
-        const result = await apiService.createMatch(undefined, DEFAULT_MATCH_RULES);
-
-        // Join SignalR group
-        await joinMatch(result.match.id);
-
-        console.log('Waiting for opponent...', result.match.id);
-        // Stay in searching state - will navigate when MatchJoined event fires
+        return;
       }
+
+      // Nothing waiting with these rules: create one and stay in the searching state until the MatchJoined event.
+      const result = await apiService.createMatch(undefined, rules);
+
+      // Join SignalR group
+      await joinMatch(result.match.id);
+
+      console.log('Waiting for opponent...', result.match.id);
     } catch (error) {
       console.error('Quick match error:', error);
       setIsSearching(false);
@@ -122,18 +137,16 @@ export const Lobby: React.FC = () => {
                 Join a match with a random opponent
               </Typography>
 
-              {/* Driven by DEFAULT_MATCH_RULES, so reverting to [] also removes this line. */}
-              {DEFAULT_MATCH_RULES.length > 0 && (
-                <Typography variant="body2" sx={{ color: '#4a9eff', mb: 2 }}>
-                  Rules: {DEFAULT_MATCH_RULES.map(rule => rule.toUpperCase()).join(' · ')}
-                </Typography>
-              )}
-
               {isSearching ? (
                 <Box sx={{ textAlign: 'center', py: 2 }}>
                   <CircularProgress sx={{ color: '#4a9eff' }} />
                   <Typography variant="body1" sx={{ mt: 2, color: '#fff' }}>
                     Searching for opponent...
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#4a9eff', mt: 1 }}>
+                    {searchingRules.length > 0
+                      ? `Rules: ${searchingRules.map(rule => rule.toUpperCase()).join(' · ')}`
+                      : 'No special rules'}
                   </Typography>
                   <Button
                     variant="outlined"
@@ -149,7 +162,7 @@ export const Lobby: React.FC = () => {
                   variant="contained"
                   fullWidth
                   size="large"
-                  onClick={handleQuickMatch}
+                  onClick={() => setIsChoosingRules(true)}
                   disabled={!isConnected}
                   sx={{
                     backgroundColor: '#4a9eff',
@@ -232,6 +245,57 @@ export const Lobby: React.FC = () => {
           </Box>
         </Box>
       </Container>
+
+      <BareModal
+        open={isChoosingRules}
+        onClose={() => setIsChoosingRules(false)}
+        className="lobby-rules-modal"
+        ariaLabel="Quick Match options"
+      >
+        <Typography variant="h5" className="lobby-rules-modal__title">
+          🎮 Quick Match
+        </Typography>
+        <Typography variant="body2" className="lobby-rules-modal__hint">
+          Pick how you want to play
+        </Typography>
+
+        <Box className="lobby-rules-modal__options">
+          <Button
+            autoFocus
+            variant="outlined"
+            size="large"
+            fullWidth
+            className="lobby-rules-modal__option"
+            onClick={() => startMatch([])}
+          >
+            <span className="lobby-rules-modal__option-label">Basic Match</span>
+            <span className="lobby-rules-modal__option-caption">No special rules</span>
+          </Button>
+
+          {/* The caption is rendered from the constant, so a fifth rule needs no change here. */}
+          <Button
+            variant="contained"
+            size="large"
+            fullWidth
+            className="lobby-rules-modal__option lobby-rules-modal__option--rules"
+            onClick={() => startMatch(ALL_MATCH_RULES)}
+          >
+            <span className="lobby-rules-modal__option-label">Match with Rules</span>
+            <span className="lobby-rules-modal__option-caption">
+              {ALL_MATCH_RULES.map(rule => rule.toUpperCase()).join(' · ')}
+            </span>
+          </Button>
+        </Box>
+
+        <Button
+          variant="text"
+          color="inherit"
+          className="lobby-rules-modal__cancel"
+          onClick={() => setIsChoosingRules(false)}
+        >
+          Cancel
+        </Button>
+      </BareModal>
     </Box>
   );
 };

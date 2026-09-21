@@ -42,6 +42,11 @@ export type MatchRule = 'Same' | 'Plus' | 'SameWall' | 'PlusWall';
 // 👉 To revert to basic-rules-only matches, set this to [] — nothing else needs to change.
 export const DEFAULT_MATCH_RULES: MatchRule[] = ['Same', 'Plus'];
 
+// What the Lobby's "Match with Rules" option enables: every rule the backend implements. Kept as data so the
+// option's caption is rendered from it and a new rule needs no UI change (see plans/bare-modal-and-match-choice-plan.md).
+// `DEFAULT_MATCH_RULES` above is the legacy implicit default — Quick Match now asks instead of assuming it.
+export const ALL_MATCH_RULES: MatchRule[] = ['Same', 'Plus', 'SameWall', 'PlusWall'];
+
 export interface Match {
   id: number;
   player1Id: string;
