@@ -249,6 +249,11 @@ export const Lobby: React.FC = () => {
       <BareModal
         open={isChoosingRules}
         onClose={() => setIsChoosingRules(false)}
+        // Full width up to the dialog's cap: without it MUI shrink-wraps the paper to its content, which
+        // left the modal a narrow column in the middle of a desktop screen. Lobby.scss keeps the content a
+        // modest centred column (the two options stay stacked), so `sm` is all the room it needs.
+        fullWidth
+        maxWidth="sm"
         className="lobby-rules-modal"
         ariaLabel="Quick Match options"
       >
