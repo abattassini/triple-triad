@@ -1,0 +1,42 @@
+/* `App.css` makes `.app` a column flex box with `align-items: center`, so the page claims the full width itself.
+   No hamburger menu here, hence the roomier top padding. */
+.welcome {
+  align-self: stretch;
+  width: 100%;
+  min-height: 100vh;
+  padding: 96px 1rem 3rem;
+}
+
+.welcome-container {
+  width: 100%;
+  max-width: 1100px;
+}
+
+.welcome-content {
+  .welcome-title {
+    color: #fff;
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  .welcome-lead {
+    color: #4a9eff;
+    text-align: center;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+  }
+
+  .welcome-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    max-width: 720px;
+    margin: 0 auto 2rem;
+  }
+
+  .welcome-back {
+    display: block;
+    margin: 2rem auto 3rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+}

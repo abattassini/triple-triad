@@ -11,13 +11,13 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import EmailIcon from '@mui/icons-material/Email';
 import LockIcon from '@mui/icons-material/Lock';
 import PersonIcon from '@mui/icons-material/Person';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { apiService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import './AccountCreation.scss';
 
 const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
@@ -92,12 +92,12 @@ const getPasswordChecks = (value: string): PasswordChecks => ({
 });
 export const AccountCreation: React.FC = () => {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [login, setLogin] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [touched, setTouched] = useState<TouchedFields>(TOUCHED_NONE);
@@ -122,13 +122,16 @@ export const AccountCreation: React.FC = () => {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      const player = await apiService.registerAccount({
+      await apiService.registerAccount({
         login: login.trim(),
         email: email.trim(),
         password,
       });
-      console.log('Account created:', player);
-      setSubmitted(true);
+
+      // Registering hands the account its six starting packs but no token, so the player is signed in with the
+      // credentials just sent and lands straight on the Welcome page with a real session.
+      await signIn(login.trim(), password);
+      navigate('/welcome', { replace: true });
     } catch (error) {
       setSubmitError((error as Error).message);
     } finally {
@@ -153,26 +156,6 @@ export const AccountCreation: React.FC = () => {
         <Typography variant="body2" className="account-creation-subtitle">
           Join the table and start collecting Triple Triad cards
         </Typography>
-
-        {submitted && (
-          <Box className="account-creation-success">
-            <Typography variant="body1" className="account-creation-success-text">
-              <CheckCircleIcon fontSize="small" /> Account created! You can now sign in.
-            </Typography>
-            <Button
-              variant="contained"
-              fullWidth
-              sx={{
-                mt: 1.5,
-                backgroundColor: '#4a9eff',
-                '&:hover': { backgroundColor: '#3a8eef' },
-              }}
-              onClick={() => navigate('/sign-in')}
-            >
-              Go to Sign In
-            </Button>
-          </Box>
-        )}
 
         {submitError && (
           <Box className="account-creation-error">
@@ -311,7 +294,7 @@ export const AccountCreation: React.FC = () => {
             size="large"
             fullWidth
             type="submit"
-            disabled={!isFormValid || isSubmitting || submitted}
+            disabled={!isFormValid || isSubmitting}
             className="account-creation-submit"
             sx={{
               backgroundColor: '#4a9eff',

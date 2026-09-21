@@ -6,6 +6,7 @@ import { Lobby } from './pages/Lobby';
 import { CardShop } from './pages/CardShop';
 import { MyCards } from './pages/MyCards';
 import { MyPacks } from './pages/MyPacks';
+import { Welcome } from './pages/Welcome';
 import { MatchPage } from './pages/MatchPage';
 import { AccountCreation } from './pages/AccountCreation';
 import { SignIn } from './pages/SignIn';
@@ -35,8 +36,16 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Keeps signed-in users out of the public entry pages (Landing / Sign In / Create Account).
-function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
+// Keeps signed-in users out of the public entry pages (Landing / Sign In / Create Account). `redirectTo` is where
+// an authenticated visitor is sent: the Lobby for the entry pages, but the Welcome page for account creation — so
+// the redirect that follows a successful registration can never race ahead of it and land the player in the Lobby.
+function PublicOnlyRoute({
+  children,
+  redirectTo = '/lobby',
+}: {
+  children: React.ReactNode;
+  redirectTo?: string;
+}) {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
@@ -44,7 +53,7 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/lobby" replace />;
+    return <Navigate to={redirectTo} replace />;
   }
 
   return <>{children}</>;
@@ -65,7 +74,7 @@ function App() {
         <Route
           path="/create-account"
           element={
-            <PublicOnlyRoute>
+            <PublicOnlyRoute redirectTo="/welcome">
               <AccountCreation />
             </PublicOnlyRoute>
           }
@@ -115,6 +124,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MyPacks />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/welcome"
+          element={
+            <ProtectedRoute>
+              <Welcome />
             </ProtectedRoute>
           }
         />

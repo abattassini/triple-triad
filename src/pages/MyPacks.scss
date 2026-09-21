@@ -1,5 +1,6 @@
 /* `App.css` makes `.app` a column flex box with `align-items: center`, so a page shell shrinks to its content
-   instead of filling the viewport. Claiming the full width here is what lets the pack panel centre itself. */
+   instead of filling the viewport. Claiming the full width here is what lets the pack panel centre itself.
+   The panel, the reveal and the empty state on it live in `PackOpener.scss` — the shared open-a-pack block. */
 .my-packs {
   align-self: stretch;
   width: 100%;
@@ -31,97 +32,9 @@
     margin: 0 auto 1.5rem;
   }
 
-  .my-packs-alert {
-    max-width: 720px;
-    margin: 0 auto 1.5rem;
-  }
-
-  .my-packs-loading {
-    display: flex;
-    justify-content: center;
-    padding: 2rem 0;
-  }
-
   .my-packs-back {
     display: block;
     margin: 2rem auto 3rem;
     color: rgba(255, 255, 255, 0.6);
-  }
-}
-
-/* ── The pack waiting to be opened ────────────────────────────────────── */
-.pack-inventory {
-  display: block;
-  background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
-  border: 2px solid #3a3a5e;
-  border-radius: 12px !important;
-  padding: 1.5rem;
-  text-align: center;
-  width: 100%;
-  max-width: 340px;
-  margin: 0 auto;
-
-  &__art {
-    width: 120px;
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-    margin-bottom: 1rem;
-  }
-
-  &__title {
-    color: #4a9eff;
-    margin-bottom: 0.25rem;
-  }
-
-  &__caption {
-    color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 1.25rem;
-  }
-
-  &__open {
-    background-color: #4a9eff !important;
-
-    &:hover {
-      background-color: #3a8eef !important;
-    }
-
-    &.Mui-disabled {
-      background-color: rgba(74, 158, 255, 0.35) !important;
-      color: rgba(255, 255, 255, 0.6) !important;
-    }
-  }
-
-  &__hint {
-    color: rgba(255, 255, 255, 0.5);
-    margin-top: 0.75rem;
-  }
-}
-
-/* Shown when the player holds no packs. */
-.my-packs-empty {
-  background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
-  border: 2px solid #3a3a5e;
-  border-radius: 12px !important;
-  padding: 2rem 1.5rem;
-  text-align: center;
-  max-width: 640px;
-  margin: 0 auto;
-
-  &__title {
-    color: #fff;
-    margin-bottom: 0.5rem;
-  }
-
-  &__caption {
-    color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 1.5rem;
-  }
-
-  &__buy {
-    background-color: #4a9eff !important;
-
-    &:hover {
-      background-color: #3a8eef !important;
-    }
   }
 }

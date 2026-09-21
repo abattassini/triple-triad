@@ -1,0 +1,93 @@
+/* The open-a-pack block: the panel with the pack art and the **Open pack** button, the reveal that follows it, and
+   the alert/loading/empty states around them. My Packs and the Welcome page both render this component, so the two
+   offer the very same flow — the `pack-inventory` class names are the ones the panel has always used, so moving
+   the block here changed nothing visually. */
+.pack-opener {
+  &__alert {
+    max-width: 720px;
+    margin: 0 auto 1.5rem;
+  }
+
+  &__loading {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+  }
+}
+
+/* ── The pack waiting to be opened ────────────────────────────────────── */
+.pack-inventory {
+  display: block;
+  background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
+  border: 2px solid #3a3a5e;
+  border-radius: 12px !important;
+  padding: 1.5rem;
+  text-align: center;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+
+  &__art {
+    width: 120px;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    margin-bottom: 1rem;
+  }
+
+  &__title {
+    color: #4a9eff;
+    margin-bottom: 0.25rem;
+  }
+
+  &__caption {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 1.25rem;
+  }
+
+  &__open {
+    background-color: #4a9eff !important;
+
+    &:hover {
+      background-color: #3a8eef !important;
+    }
+
+    &.Mui-disabled {
+      background-color: rgba(74, 158, 255, 0.35) !important;
+      color: rgba(255, 255, 255, 0.6) !important;
+    }
+  }
+
+  &__hint {
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 0.75rem;
+  }
+}
+
+/* Shown when the player holds nothing left to open: My Packs points at the shop, the Welcome page at the Lobby. */
+.pack-opener-empty {
+  background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
+  border: 2px solid #3a3a5e;
+  border-radius: 12px !important;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+
+  &__title {
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+
+  &__caption {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 1.5rem;
+  }
+
+  &__action {
+    background-color: #4a9eff !important;
+
+    &:hover {
+      background-color: #3a8eef !important;
+    }
+  }
+}
