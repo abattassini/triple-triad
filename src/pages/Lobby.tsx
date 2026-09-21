@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import './Lobby.scss';
 
 export const Lobby: React.FC = () => {
-  const { user, signOut, refreshUser } = useAuth();
+  const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const login = user?.login;
   const [isSearching, setIsSearching] = useState(false);
@@ -96,11 +96,6 @@ export const Lobby: React.FC = () => {
     // TODO: Call API to cancel/delete waiting match
   };
 
-  const handleLogout = () => {
-    signOut();
-    navigate('/');
-  };
-
   if (!login) {
     return <Navigate to="/" replace />;
   }
@@ -114,10 +109,6 @@ export const Lobby: React.FC = () => {
         <Typography variant="body1" className="lobby-subtitle">
           {isConnected ? '🟢 Connected' : '🔴 Connecting...'}
         </Typography>
-
-        <Button variant="text" color="inherit" onClick={handleLogout} sx={{ mb: 2 }}>
-          Sign Out
-        </Button>
 
         <Box className="lobby-body">
           <PlayerStats player={user} variant="sidebar" className="lobby-stats-desktop" />
