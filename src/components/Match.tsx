@@ -25,6 +25,7 @@ import { Hand } from './Hand';
 import { Board } from './Board';
 import {
   apiService,
+  CPU_OPPONENT_ID,
   type Card as ApiCard,
   type Match as MatchData,
   type LocalCard,
@@ -436,7 +437,11 @@ export const Match: React.FC = () => {
   }, [match, userId, completionReason, showGameOver]);
   const getOpponentName = () => {
     if (!match) return 'Opponent';
-    return match.player1Id === userId ? match.player2Id : match.player1Id;
+
+    const opponent = match.player1Id === userId ? match.player2Id : match.player1Id;
+
+    // The CPU plays under the sentinel login — an identity, not a name — so it is never shown as one.
+    return opponent === CPU_OPPONENT_ID ? 'CPU' : opponent;
   };
 
   // Loading state
@@ -508,7 +513,9 @@ export const Match: React.FC = () => {
   const opponentName = getOpponentName();
   const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
   const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
-  // Rewards granted to this player when the match completed (if any).
+  // Rewards granted to this player when the match completed, if the server granted any at all: a CPU match can be
+  // reward-free (CpuOpponent.RewardsForCpuMatches on the server) and a loss pays 0 XP, so the dialog only shows the
+  // box when there is something in it.
   const myReward = lastRewards
     ? match.player1Id === userId
       ? { coins: lastRewards.player1Coins, experience: lastRewards.player1Experience }
@@ -677,7 +684,7 @@ export const Match: React.FC = () => {
               ⏱️ {gameResult === 'won' ? 'Your opponent left — you win.' : 'You timed out.'}
             </Typography>
           )}
-          {myReward && (
+          {myReward && (myReward.coins > 0 || myReward.experience > 0) && (
             <Box
               sx={{
                 mt: 2,

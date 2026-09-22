@@ -51,6 +51,10 @@ export const ALL_MATCH_RULES: MatchRule[] = ['Same', 'Plus', 'SameWall', 'PlusWa
 // client-picked hand, so the picker offers Continue at exactly this many cards.
 export const HAND_SIZE = 5;
 
+// The login the server seats as the second player when the opponent is the CPU: the sentinel the game tables hold,
+// and an identity rather than a name. The label a player reads (the board's "CPU") is presentation on top of it.
+export const CPU_OPPONENT_ID = 'AI';
+
 export interface Match {
   id: number;
   player1Id: string;

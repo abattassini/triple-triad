@@ -5,7 +5,7 @@ import { BareModal } from '../components/BareModal';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { PlayerStats } from '../components/PlayerStats';
 import { SelectHandModal } from '../components/SelectHandModal';
-import { apiService, ALL_MATCH_RULES, type MatchRule } from '../services/api';
+import { apiService, ALL_MATCH_RULES, CPU_OPPONENT_ID, type MatchRule } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
 import './Lobby.scss';
@@ -20,6 +20,9 @@ const sameRuleSet = (left: MatchRule[], right: MatchRule[]): boolean =>
 /** Where the Quick Match flow is: idle → the rules modal → searching → picking → waiting → the board. */
 type MatchPhase = 'idle' | 'searching' | 'picking' | 'waiting';
 
+/** Who the rules modal is about to look for: a person, or the CPU. */
+type OpponentKind = 'human' | 'cpu';
+
 /** How often the waiting panel checks the match while the opponent picks — the MatchReady push is the fast path. */
 const READINESS_POLL_MS = 2000;
 
@@ -31,6 +34,10 @@ export const Lobby: React.FC = () => {
 
   // Where the Quick Match flow is (see MatchPhase above).
   const [phase, setPhase] = useState<MatchPhase>('idle');
+  // Which opponent the rules modal's two options will start a match against (set by the tile that opened it).
+  const [opponentKind, setOpponentKind] = useState<OpponentKind>('human');
+  // True while that start call is in flight, so neither tile can be clicked twice.
+  const [isStarting, setIsStarting] = useState(false);
   // The match being set up — and, while waiting, the one about to be opened.
   const [matchId, setMatchId] = useState<number | null>(null);
   // The rules the player is waiting with, so the searching state can name them.
@@ -198,6 +205,7 @@ export const Lobby: React.FC = () => {
     setSearchingRules(rules);
     setMatchId(null);
     setPhase('searching');
+    setIsStarting(true);
 
     try {
       // Only a waiting match that plays by exactly these rules may be joined, so the option the player picked is
@@ -225,8 +233,46 @@ export const Lobby: React.FC = () => {
     } catch (error) {
       console.error('Quick match error:', error);
       endSearch(`Failed to start quick match: ${(error as Error).message}`);
+    } finally {
+      setIsStarting(false);
     }
   };
+
+  /**
+   * Quick Match against CPU: there is nobody to search for. The match is created with the CPU already seated — and
+   * with its hand filed — so the same rules choice leads straight to the picker, and on to the board.
+   */
+  const startCpuMatch = async (rules: MatchRule[]) => {
+    if (!login || !isConnected) {
+      alert('Please wait for connection...');
+      return;
+    }
+
+    setIsChoosingRules(false);
+    setStatusMessage(null);
+    setPickError(null);
+    setMatchId(null);
+    setIsStarting(true);
+
+    try {
+      const created = await apiService.createMatch(CPU_OPPONENT_ID, rules, {
+        pickHandLater: true,
+      });
+      await enterRoom(created.match.id);
+
+      setMatchId(created.match.id);
+      setPhase('picking');
+    } catch (error) {
+      console.error('CPU match error:', error);
+      endSearch(`Failed to start the match against the CPU: ${(error as Error).message}`);
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  /** Whichever starter the rules modal was opened for (the tile decided the kind). */
+  const startChosenMatch = (rules: MatchRule[]) =>
+    opponentKind === 'cpu' ? startCpuMatch(rules) : startMatch(rules);
 
   /**
    * Continue in the picker: file the five cards. Both players do exactly this once the match exists, and this is the
@@ -241,6 +287,14 @@ export const Lobby: React.FC = () => {
 
     try {
       await apiService.setMatchHand(matchId, cardIds);
+
+      // Against the CPU both hands are in the moment ours is — it filed its own when the match was created — so
+      // there is nothing left to wait for and the board opens right away.
+      if (opponentKind === 'cpu') {
+        await openBoard(matchId);
+        return;
+      }
+
       setPhase('waiting');
     } catch (error) {
       setPickError((error as Error).message);
@@ -331,9 +385,12 @@ export const Lobby: React.FC = () => {
                   variant="contained"
                   fullWidth
                   size="large"
-                  onClick={() => setIsChoosingRules(true)}
+                  onClick={() => {
+                    setOpponentKind('human');
+                    setIsChoosingRules(true);
+                  }}
                   // The picker and the waiting panel live in their own modal, which blocks the page behind them.
-                  disabled={!isConnected || phase !== 'idle'}
+                  disabled={!isConnected || phase !== 'idle' || isStarting}
                   sx={{
                     backgroundColor: '#4a9eff',
                     '&:hover': { backgroundColor: '#3a8eef' },
@@ -342,6 +399,33 @@ export const Lobby: React.FC = () => {
                   Quick Match
                 </Button>
               )}
+            </Paper>
+
+            {/* The CPU tile: same rules choice, nobody to search for. It is the second option because it is Quick
+                Match's fallback in spirit — a match right now, just not against a person. */}
+            <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>
+              <Typography variant="h5" sx={{ color: '#4a9eff', mb: 1 }}>
+                🤖 Quick Match against CPU
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#ccc', mb: 2 }}>
+                Play a full match against the computer right away
+              </Typography>
+              <Button
+                variant="contained"
+                fullWidth
+                size="large"
+                onClick={() => {
+                  setOpponentKind('cpu');
+                  setIsChoosingRules(true);
+                }}
+                disabled={!isConnected || phase !== 'idle' || isStarting}
+                sx={{
+                  backgroundColor: '#4a9eff',
+                  '&:hover': { backgroundColor: '#3a8eef' },
+                }}
+              >
+                Quick Match against CPU
+              </Button>
             </Paper>
 
             <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>
@@ -385,33 +469,6 @@ export const Lobby: React.FC = () => {
                 Open Shop
               </Button>
             </Paper>
-
-            <Paper
-              elevation={3}
-              sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2, opacity: 0.6 }}
-            >
-              <Typography variant="h5" sx={{ color: '#888', mb: 1 }}>
-                ➕ Create Match
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#666', mb: 2 }}>
-                Custom match settings (Coming Soon)
-              </Typography>
-              <Button variant="contained" fullWidth size="large" disabled>
-                Create Match
-              </Button>
-            </Paper>
-
-            <Paper
-              elevation={3}
-              sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2, opacity: 0.6 }}
-            >
-              <Typography variant="h5" sx={{ color: '#888', mb: 1 }}>
-                📋 Match History
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#666' }}>
-                No matches played yet
-              </Typography>
-            </Paper>
           </Box>
         </Box>
       </Container>
@@ -428,7 +485,7 @@ export const Lobby: React.FC = () => {
         ariaLabel="Quick Match options"
       >
         <Typography variant="h5" className="lobby-rules-modal__title">
-          🎮 Quick Match
+          {opponentKind === 'cpu' ? '🤖 Quick Match against CPU' : '🎮 Quick Match'}
         </Typography>
         <Typography variant="body2" className="lobby-rules-modal__hint">
           Pick how you want to play
@@ -441,7 +498,7 @@ export const Lobby: React.FC = () => {
             size="large"
             fullWidth
             className="lobby-rules-modal__option"
-            onClick={() => startMatch([])}
+            onClick={() => startChosenMatch([])}
           >
             <span className="lobby-rules-modal__option-label">Basic Match</span>
             <span className="lobby-rules-modal__option-caption">No special rules</span>
@@ -453,7 +510,7 @@ export const Lobby: React.FC = () => {
             size="large"
             fullWidth
             className="lobby-rules-modal__option lobby-rules-modal__option--rules"
-            onClick={() => startMatch(ALL_MATCH_RULES)}
+            onClick={() => startChosenMatch(ALL_MATCH_RULES)}
           >
             <span className="lobby-rules-modal__option-label">Match with Rules</span>
             <span className="lobby-rules-modal__option-caption">
