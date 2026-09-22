@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Alert, Box, Typography, CircularProgress, Container, Button, Paper } from '@mui/material';
-import { BareModal } from '../components/BareModal';
+import { BareModal, BareModalLoading } from '../components/BareModal';
 import { HamburgerMenu } from '../components/HamburgerMenu';
 import { PlayerStats } from '../components/PlayerStats';
 import { SelectHandModal } from '../components/SelectHandModal';
@@ -209,9 +209,13 @@ export const Lobby: React.FC = () => {
 
     try {
       // Only a waiting match that plays by exactly these rules may be joined, so the option the player picked is
-      // the match they get; a waiting match with other rules (or none) means starting our own.
+      // the match they get; a waiting match with other rules (or none) means starting our own. Our *own* waiting
+      // match is never a candidate: the server refuses a join into it ("Cannot join your own match"), which would
+      // leave the player stuck on their own ghost — and the create below gives it up anyway.
       const waitingMatches = await apiService.getWaitingMatches();
-      const compatible = waitingMatches.find(match => sameRuleSet(match.rules, rules));
+      const compatible = waitingMatches.find(
+        match => match.player1Id !== login && sameRuleSet(match.rules, rules)
+      );
 
       if (compatible) {
         // Somebody is waiting: joining seats us (there is no hand in this call) and both of us pick from here.
@@ -528,6 +532,16 @@ export const Lobby: React.FC = () => {
           Cancel
         </Button>
       </BareModal>
+
+      {/* From the option click until the picker is on screen: the choice has been made and the create/join (plus the
+          SignalR room) is in flight. The same shell shows a spinner instead of dropping the player onto an idle Lobby,
+          and it closes on its own — `isStarting` is cleared in the same batch that moves the phase on, so the
+          searching tile (or the picker) is what the player sees next. It cannot be dismissed, because the call behind
+          it decides where the flow goes next. */}
+      <BareModalLoading
+        open={isStarting}
+        caption={opponentKind === 'cpu' ? 'Setting up your match…' : 'Finding you an opponent…'}
+      />
 
       {/* The picker, or the wait for the opponent's pick. Its own modal, so the page behind stays blocked while a
           match is being set up; Cancel is offered while picking only — once the hand is committed, the ways out are
