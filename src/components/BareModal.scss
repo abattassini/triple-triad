@@ -1,8 +1,19 @@
 /* The content wrapper every BareModal renders around its children. The shell itself is transparent (see
    BareModal.tsx for why the surface removal is done in `sx` and not here), so consumers bring their own layout;
-   this only fills the paper so grids inside can use the full width. */
+   this fills the paper and gives it the one thing the paper deliberately does not have — scrolling.
+
+   `BareModal` keeps the paper's own overflow **visible** (the pack reveal paints its glow outside the cards), and
+   MUI caps that paper at `max-height: calc(100% - 64px)`: a dialog taller than the screen spills off it with nothing
+   to scroll, so its bottom — the picker's Continue, the reveal's cards — used to sit out of reach on a phone. The
+   wrapper is the scroll container instead, capped at exactly the room the paper is allowed (`100dvh - 64px`, the
+   same number MUI computes). `overflow-x: hidden` keeps a descendant that paints wide (the reveal's burst) from
+   raising a horizontal scrollbar: only the y axis scrolls, because that is the axis this app outgrows — narrow
+   phones fit their width by design. */
 .bare-modal {
   width: 100%;
+  max-height: calc(100dvh - 64px);
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* `BareModalLoading`: the shell's own spinner, centred on the darkened page with its caption underneath. There is no

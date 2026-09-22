@@ -36,12 +36,14 @@
 
 /* Mobile Landscape Mode */
 @media (max-width: 1199px) and (orientation: landscape) {
+  /* Deliberately **no** height lock here. A landscape phone is the shortest viewport this app runs in — shorter than
+     most pages, and shorter than the Match board's hands — so pinning `.app` to the viewport height with
+     `overflow: hidden` made a page that did not fit unscrollable: the board, the shop and a long collection were cut
+     off below the fold, with nothing able to bring them up. The page scrolls instead, and the board lays itself out
+     with `min-height` (Match.scss) so that scrolling happens here, in one place. */
   .app {
     padding: 0.5rem 0; /* Minimal vertical padding */
     min-height: 100vh;
-    height: 100vh;
-    max-height: 100vh;
-    overflow: hidden;
   }
 
   .app h1 {

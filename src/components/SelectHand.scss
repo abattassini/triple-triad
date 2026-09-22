@@ -278,6 +278,9 @@
 
 /* ── The modal shell: the picker, or the wait for the opponent's pick ─────────── */
 
+/* Nothing here manages height: the shared shell caps its content to the room the dialog leaves and scrolls it
+   (`BareModal`), which is what keeps the Continue button reachable when the panel is taller than a phone screen. */
+
 /* While waiting there is nothing to pick, so the panel is the same surface with a spinner and one line of copy. */
 .select-hand-waiting {
   display: flex;

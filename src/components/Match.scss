@@ -54,8 +54,12 @@
     padding: 0.5rem 1rem;
     max-width: 100vw;
     width: 100%;
+    /* `min-height`, never `height`: pinning this to the viewport leaves the two 346px hands taller than the box, so
+       they overflow into an **inner** scroll area of their own (`.game-layout` carries `overflow-x: hidden`, which
+       makes the other axis `auto`) — a second scrollbar to find, inside a page that used to be unable to scroll at
+       all. Growing with the content hands the scrolling back to the page: everything is laid out at its natural size
+       and reachable in one place. */
     min-height: calc(100vh - 80px); // Account for title height
-    height: calc(100vh - 80px);
   }
 
   .player-hand {
