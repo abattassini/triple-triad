@@ -10,6 +10,12 @@
   border-radius: 12px;
   background: linear-gradient(145deg, #1a1a2e, #16213e);
 
+  /* The narrowest phones (320px) leave 280px inside this padding, and the three cards a phone's row holds need
+     296px — so the panel's padding is what gives way on them, not the card size. */
+  @media (max-width: 359px) {
+    padding: 0.6rem;
+  }
+
   @media (min-width: 900px) {
     padding: 1.75rem;
   }
@@ -29,19 +35,37 @@
 
   /* ── The selected five, right under the title ─────────────────────────────── */
 
+  /* Fixed-size cards, dealt in the same sizes as the grid below, laid out as a centred wrapping row: one line of
+     five from the desktop width up, and 3 + 2 on a phone. While the layout is a phone's the row is capped at three
+     cards wide, so a fourth can never fit and the wrap lands on 3 + 2 rather than 4 + 1. */
   &__slots {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
     gap: 0.6rem;
-    margin-bottom: 1.25rem;
+    max-width: calc(3 * 92px + 2 * 0.6rem);
+    margin: 0 auto 1.25rem;
+
+    @media (min-width: 600px) {
+      /* A step wider and a bigger gap: from here five cards want 568px of room, which this layout has from a 612px
+         viewport up — the room the panel has is what wraps the row, not the cap. */
+      gap: 0.75rem;
+      max-width: none;
+    }
   }
 
-  /* One slot: a filled one is the picked card and puts it back when clicked, an empty one shows its number. */
+  /* One slot: a filled one is the picked card and puts it back when clicked, an empty one shows its number. Both are
+     the same card-sized box, so the row does not move as cards land in it. */
   &__slot {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 104px;
+    /* Border-box explicitly: the width below has to be the card's size whether or not the host page resets it (the
+       picker is written to be dropped onto a bare page, per the component's own note). */
+    box-sizing: border-box;
+    width: 92px;
+    min-height: 145px;
     padding: 0.25rem;
     border: 1px dashed rgba(74, 158, 255, 0.35);
     border-radius: 10px;
@@ -53,6 +77,22 @@
       border-color 160ms ease,
       background 160ms ease,
       transform 160ms ease;
+
+    /* The same four steps `.select-hand__grid` and MyCards' `.level-section__cards` use. */
+    @media (min-width: 600px) {
+      width: 104px;
+      min-height: 161px;
+    }
+
+    @media (min-width: 900px) {
+      width: 120px;
+      min-height: 181px;
+    }
+
+    @media (min-width: 1400px) {
+      width: 136px;
+      min-height: 201px;
+    }
 
     &--filled {
       border-style: solid;
@@ -70,25 +110,19 @@
         outline-offset: 2px;
       }
     }
-  }
 
-  /* Inside a slot the tile is just the art: the slot already is the clickable surface, and the level/badge row has
-     nothing to show there anyway. */
-  &__slot .card-tile {
-    width: 100%;
-    padding: 0.25rem;
-    border: 0;
-    background: none;
+    /* Inside a slot the tile is just the art with its name over it: the slot is the clickable surface and already
+       the size of a card, so the tile brings no padding, frame or background of its own — and the level/badge row
+       has nothing to show in a slot anyway. */
+    .card-tile {
+      width: 100%;
+      padding: 0;
+      border: 0;
+      background: none;
 
-    .card-tile__art {
-      max-width: 100%;
-    }
-  }
-
-  @media (max-width: 599px) {
-    &__slot .card-tile .card-tile__name {
-      /* Five columns on a phone are too narrow for a readable name — the art is what the row is for. */
-      display: none;
+      .card-tile__art {
+        max-width: 100%;
+      }
     }
   }
 
