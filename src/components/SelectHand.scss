@@ -1,0 +1,268 @@
+/* The hand picker (SelectHand.tsx) and the modal shell around it (SelectHandModal.tsx).
+   The palette and the grid steps are the ones the rest of the house uses: `.level-section__cards` from MyCards.scss
+   for the card grid, `.pack-inventory` / `.my-cards-empty` for the panel and the accent buttons, and `.card-tile`
+   (CardTile.scss) for the cards themselves. Nothing here knows about the modal's dismissal or the matchmaking
+   around it. */
+.select-hand {
+  width: 100%;
+  padding: 1.25rem;
+  border: 2px solid #3a3a5e;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+
+  @media (min-width: 900px) {
+    padding: 1.75rem;
+  }
+
+  &__title {
+    color: #fff;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 0.35rem;
+  }
+
+  &__hint {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  /* ── The selected five, right under the title ─────────────────────────────── */
+
+  &__slots {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin-bottom: 1.25rem;
+  }
+
+  /* One slot: a filled one is the picked card and puts it back when clicked, an empty one shows its number. */
+  &__slot {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 104px;
+    padding: 0.25rem;
+    border: 1px dashed rgba(74, 158, 255, 0.35);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 1.1rem;
+    font-weight: 700;
+    transition:
+      border-color 160ms ease,
+      background 160ms ease,
+      transform 160ms ease;
+
+    &--filled {
+      border-style: solid;
+      border-color: rgba(74, 158, 255, 0.55);
+      background: rgba(74, 158, 255, 0.12);
+      cursor: pointer;
+
+      &:hover {
+        border-color: #ffd166;
+        transform: translateY(-2px);
+      }
+
+      &:focus-visible {
+        outline: 2px solid #4a9eff;
+        outline-offset: 2px;
+      }
+    }
+  }
+
+  /* Inside a slot the tile is just the art: the slot already is the clickable surface, and the level/badge row has
+     nothing to show there anyway. */
+  &__slot .card-tile {
+    width: 100%;
+    padding: 0.25rem;
+    border: 0;
+    background: none;
+
+    .card-tile__art {
+      max-width: 100%;
+    }
+  }
+
+  @media (max-width: 599px) {
+    &__slot .card-tile .card-tile__name {
+      /* Five columns on a phone are too narrow for a readable name — the art is what the row is for. */
+      display: none;
+    }
+  }
+
+  &__alert {
+    margin-bottom: 1rem;
+  }
+
+  &__loading {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+  }
+
+  /* ── The level picker and the cards of that level ─────────────────────────── */
+
+  &__picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-bottom: 1rem;
+  }
+
+  &__picker-select {
+    min-width: 240px;
+  }
+
+  &__picker-hint {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    gap: 0.6rem;
+    min-height: 120px;
+
+    @media (min-width: 600px) {
+      grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+      gap: 0.75rem;
+    }
+
+    @media (min-width: 900px) {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    }
+
+    @media (min-width: 1400px) {
+      grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+      gap: 1rem;
+    }
+  }
+
+  /* One card of the level: the tile itself is the button, so all that is added here is the lift on hover. */
+  &__option {
+    display: block;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    transition:
+      transform 160ms ease,
+      box-shadow 160ms ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(74, 158, 255, 0.25);
+    }
+
+    &:focus-visible {
+      outline: 2px solid #4a9eff;
+      outline-offset: 2px;
+    }
+  }
+
+  /* ── Under five cards owned: no Continue, just the way to get more ─────────── */
+
+  &__blocked {
+    padding: 1.5rem;
+    border: 1px solid #3a3a5e;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.25);
+    text-align: center;
+  }
+
+  &__blocked-title {
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+
+  &__blocked-caption {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 1.25rem;
+  }
+
+  &__blocked-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+
+  &__blocked-button {
+    background-color: #4a9eff !important;
+
+    &:hover {
+      background-color: #3a8eef !important;
+    }
+
+    /* The second way out (the Card Shop) is the outlined one. */
+    &.MuiButton-outlined {
+      color: #4a9eff !important;
+      border-color: #4a9eff !important;
+      background-color: transparent !important;
+
+      &:hover {
+        color: #3a8eef !important;
+        border-color: #3a8eef !important;
+        background-color: rgba(74, 158, 255, 0.08) !important;
+      }
+    }
+  }
+
+  /* ── Continue (and the way back out) ──────────────────────────────────────── */
+
+  &__footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+  }
+
+  &__continue {
+    background-color: #4a9eff !important;
+
+    &:hover {
+      background-color: #3a8eef !important;
+    }
+
+    &.Mui-disabled {
+      color: rgba(255, 255, 255, 0.6) !important;
+      background-color: rgba(74, 158, 255, 0.35) !important;
+    }
+  }
+
+  &__cancel {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+}
+
+/* ── The modal shell: the picker, or the wait for the opponent's pick ─────────── */
+
+/* While waiting there is nothing to pick, so the panel is the same surface with a spinner and one line of copy. */
+.select-hand-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 2.5rem 1.5rem;
+  border: 2px solid #3a3a5e;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  text-align: center;
+
+  &__title {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  &__caption {
+    color: rgba(255, 255, 255, 0.6);
+  }
+}

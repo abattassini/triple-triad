@@ -72,6 +72,29 @@ const RULE_LABELS: Partial<Record<MatchRule, string>> = {
 // Unknown rule names fall back to their upper-cased name so new backend rules still show up.
 const ruleLabel = (rule: string): string => RULE_LABELS[rule as MatchRule] ?? rule.toUpperCase();
 
+/**
+ * Who won, seen from this player's side. `WinnerId` decides it, and it is the *only* thing that can: a match settled
+ * by a timeout (a forfeit) is completed with the scores still at their opening 5-5 — nobody played a card — so
+ * comparing the score line there would call a decided match a draw. The scores are only the fallback for a row with
+ * no winner recorded at all.
+ */
+const resolveResult = (match: MatchData, userId: string): 'won' | 'lost' | 'draw' => {
+  if (match.winnerId) {
+    return match.winnerId === userId ? 'won' : 'lost';
+  }
+
+  const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
+  const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
+
+  if (playerScore > opponentScore) {
+    return 'won';
+  }
+  if (playerScore < opponentScore) {
+    return 'lost';
+  }
+  return 'draw';
+};
+
 export const Match: React.FC = () => {
   const { matchId } = useParams<{ matchId: string }>();
   const navigate = useNavigate();
@@ -102,6 +125,10 @@ export const Match: React.FC = () => {
   const [gameResult, setGameResult] = useState<'won' | 'lost' | 'draw' | null>(null);
   // Rewards granted when the match completed (coins/XP for both sides).
   const [lastRewards, setLastRewards] = useState<MatchRewards | null>(null);
+  // Why the match ended early (`timeout` for a forfeit), or null when it was played out.
+  const [completionReason, setCompletionReason] = useState<string | null>(null);
+  // Set when the server gives up on the match (a timeout) — there is nothing left to play.
+  const [abandonedReason, setAbandonedReason] = useState<string | null>(null);
   // Rule that fired on the most recent move (e.g. SAME), flashed briefly as feedback.
   const [lastTriggeredRule, setLastTriggeredRule] = useState<string | null>(null);
 
@@ -248,20 +275,7 @@ export const Match: React.FC = () => {
 
       // Wait 3 seconds before showing the dialog
       const timer = setTimeout(() => {
-        // Determine result
-        const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
-        const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
-
-        let result: 'won' | 'lost' | 'draw';
-        if (playerScore > opponentScore) {
-          result = 'won';
-        } else if (playerScore < opponentScore) {
-          result = 'lost';
-        } else {
-          result = 'draw';
-        }
-
-        setGameResult(result);
+        setGameResult(resolveResult(match, userId));
         setShowGameOver(true);
       }, 3000);
 
@@ -342,10 +356,14 @@ export const Match: React.FC = () => {
         player1Score: number;
         player2Score: number;
         completedAt: string;
+        // Absent on a match that was played out; `timeout` when the server settled a match a player walked away
+        // from (the forfeit below is the only place that sends it).
+        reason?: string;
         rewards?: MatchRewards | null;
       };
       console.log('Game completed:', data);
       setLastRewards(data.rewards ?? null);
+      setCompletionReason(data.reason ?? null);
       setMatch(prev =>
         prev
           ? {
@@ -355,6 +373,14 @@ export const Match: React.FC = () => {
             }
           : null
       );
+    };
+    const handleMatchAbandoned = (...args: unknown[]) => {
+      const data = args[0] as { matchId: number; reason?: string };
+      console.log('Match abandoned:', data);
+
+      if (data.matchId === parseInt(matchId)) {
+        setAbandonedReason(data.reason ?? 'nobody picked their cards in time');
+      }
     };
     const handleError = (...args: unknown[]) => {
       const errorMessage = args[0] as string;
@@ -368,10 +394,12 @@ export const Match: React.FC = () => {
     // Subscribe to events
     on('CardPlayed', handleCardPlayed);
     on('GameCompleted', handleGameCompleted);
+    on('MatchAbandoned', handleMatchAbandoned);
     on('Error', handleError);
     return () => {
       off('CardPlayed', handleCardPlayed);
       off('GameCompleted', handleGameCompleted);
+      off('MatchAbandoned', handleMatchAbandoned);
       off('Error', handleError);
     };
   }, [isConnected, matchId, userId, joinSignalRMatch, on, off]);
@@ -384,28 +412,28 @@ export const Match: React.FC = () => {
     const isBoardFull = board.every(cell => cell !== null);
 
     if (isBoardFull && match.status === 'completed' && !showGameOver) {
-      // Determine game result
-      const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
-      const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
-
-      let result: 'won' | 'lost' | 'draw';
-      if (playerScore > opponentScore) {
-        result = 'won';
-      } else if (playerScore < opponentScore) {
-        result = 'lost';
-      } else {
-        result = 'draw';
-      }
-
       // Show dialog after 3 seconds
       const timer = setTimeout(() => {
-        setGameResult(result);
+        setGameResult(resolveResult(match, userId));
         setShowGameOver(true);
       }, 3000);
 
       return () => clearTimeout(timer);
     }
   }, [board, match, userId, showGameOver]);
+
+  // A forfeit ends the match with the board half empty, so the two full-board effects above never fire for it: the
+  // completion push is the only signal and the final scores are what decide the wording.
+  useEffect(() => {
+    if (!match || !userId || !completionReason || showGameOver) return;
+
+    const timer = setTimeout(() => {
+      setGameResult(resolveResult(match, userId));
+      setShowGameOver(true);
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [match, userId, completionReason, showGameOver]);
   const getOpponentName = () => {
     if (!match) return 'Opponent';
     return match.player1Id === userId ? match.player2Id : match.player1Id;
@@ -443,7 +471,40 @@ export const Match: React.FC = () => {
         </Typography>
       </Box>
     );
-  } // Get scores based on which player we are
+  }
+
+  // Settled before it could be played — a deadline passed or the search was cancelled. There is nothing to play, so
+  // the way out is the only thing left on screen.
+  if (match.status === 'abandoned' || abandonedReason) {
+    return (
+      <Box
+        display="flex"
+        flexDirection="column"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="400px"
+        sx={{ gap: 2, textAlign: 'center', px: 2 }}
+      >
+        <Typography variant="h5" sx={{ color: '#ffcc00', fontWeight: 'bold' }}>
+          ⚠️ Match abandoned
+        </Typography>
+        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+          {abandonedReason
+            ? `This match could not be played — ${abandonedReason}.`
+            : 'This match could not be played — it expired before both players were ready.'}
+        </Typography>
+        <Button
+          onClick={() => navigate('/lobby')}
+          variant="contained"
+          sx={{ bgcolor: '#4a9eff', '&:hover': { bgcolor: '#0078ff' }, px: 4, py: 1.5 }}
+        >
+          Back to Lobby
+        </Button>
+      </Box>
+    );
+  }
+
+  // Get scores based on which player we are
   const opponentName = getOpponentName();
   const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
   const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
@@ -559,50 +620,61 @@ export const Match: React.FC = () => {
           {gameResult === 'draw' && '🤝 Draw!'}
         </DialogTitle>
         <DialogContent sx={{ textAlign: 'center', color: '#fff' }}>
-          <Typography variant="h5" sx={{ mb: 2 }}>
-            Final Score
-          </Typography>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-around',
-              mb: 3,
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Typography variant="h6" sx={{ color: '#4a9eff' }}>
-                {userId}
+          {/* A match settled by a timeout has no score to show: nobody played a card, so the line would read 5-5 and
+              the outcome is stated in words instead (below). */}
+          {!completionReason && (
+            <>
+              <Typography variant="h5" sx={{ mb: 2 }}>
+                Final Score
               </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#4eff4a' }}>
-                {playerScore}
-              </Typography>
-            </Box>
-            <Typography variant="h4" sx={{ alignSelf: 'center', color: '#666' }}>
-              -
-            </Typography>
-            <Box>
-              <Typography variant="h6" sx={{ color: '#ff6b6b' }}>
-                {opponentName}
-              </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ff4a4a' }}>
-                {opponentScore}
-              </Typography>
-            </Box>
-          </Box>
-          {gameResult === 'won' && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-around',
+                  mb: 3,
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography variant="h6" sx={{ color: '#4a9eff' }}>
+                    {userId}
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#4eff4a' }}>
+                    {playerScore}
+                  </Typography>
+                </Box>
+                <Typography variant="h4" sx={{ alignSelf: 'center', color: '#666' }}>
+                  -
+                </Typography>
+                <Box>
+                  <Typography variant="h6" sx={{ color: '#ff6b6b' }}>
+                    {opponentName}
+                  </Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ff4a4a' }}>
+                    {opponentScore}
+                  </Typography>
+                </Box>
+              </Box>
+            </>
+          )}
+          {gameResult === 'won' && !completionReason && (
             <Typography variant="body1" sx={{ color: '#4eff4a', mb: 1 }}>
               Excellent work! You dominated the battlefield! 🏆
             </Typography>
           )}
-          {gameResult === 'lost' && (
+          {gameResult === 'lost' && !completionReason && (
             <Typography variant="body1" sx={{ color: '#ff6b6b', mb: 1 }}>
               Better luck next time! Keep practicing! 💪
             </Typography>
           )}
-          {gameResult === 'draw' && (
+          {gameResult === 'draw' && !completionReason && (
             <Typography variant="body1" sx={{ color: '#ffcc00', mb: 1 }}>
               Evenly matched! A true battle of equals!
+            </Typography>
+          )}
+          {completionReason === 'timeout' && (
+            <Typography variant="body1" sx={{ color: '#ffcc00', mb: 1 }}>
+              ⏱️ {gameResult === 'won' ? 'Your opponent left — you win.' : 'You timed out.'}
             </Typography>
           )}
           {myReward && (

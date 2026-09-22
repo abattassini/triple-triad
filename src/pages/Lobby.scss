@@ -27,6 +27,12 @@
     margin-bottom: 3rem;
   }
 
+  /* A dead end explained above the tiles: a timeout, a cancelled search, a failed call. */
+  .lobby-status {
+    max-width: 640px;
+    margin: 0 auto 1.5rem;
+  }
+
   .lobby-actions {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));

@@ -47,6 +47,10 @@ export const DEFAULT_MATCH_RULES: MatchRule[] = ['Same', 'Plus'];
 // `DEFAULT_MATCH_RULES` above is the legacy implicit default — Quick Match now asks instead of assuming it.
 export const ALL_MATCH_RULES: MatchRule[] = ['Same', 'Plus', 'SameWall', 'PlusWall'];
 
+// How many cards a hand holds — mirrors GameLogicService.HandSize on the server, which is what validates a
+// client-picked hand, so the picker offers Continue at exactly this many cards.
+export const HAND_SIZE = 5;
+
 export interface Match {
   id: number;
   player1Id: string;
@@ -60,6 +64,10 @@ export interface Match {
   completedAt?: string | null;
   // Rules enabled when the match was created (empty array = no special rules).
   rules: MatchRule[];
+  // True once both players have their five cards filed — what the SelectHand step waits on.
+  handsReady?: boolean;
+  // True when a match deadline has passed; the server settles it on its next sweep.
+  timedOut?: boolean;
 }
 
 export interface CardPlacement {
@@ -236,13 +244,19 @@ class ApiService {
 
   // Create a new match (Quick Match) - identity comes from the JWT
   // `rules` are the special rules to enable for the match (e.g. ['Same']).
-  async createMatch(opponentId?: string, rules: MatchRule[] = []): Promise<CreateMatchResponse> {
+  async createMatch(
+    opponentId?: string,
+    rules: MatchRule[] = [],
+    options: { cardIds?: number[]; pickHandLater?: boolean } = {}
+  ): Promise<CreateMatchResponse> {
     const response = await fetch(`${API_BASE_URL}/api/game/match`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({
         opponentId: opponentId || null, // null for PvP waiting, "AI" for AI match
         rules,
+        cardIds: options.cardIds,
+        pickHandLater: options.pickHandLater,
       }),
     });
     if (!response.ok) {
@@ -263,19 +277,58 @@ class ApiService {
     return response.json();
   }
 
-  // Join an existing match - identity comes from the JWT
-  async joinMatch(matchId: number): Promise<JoinMatchResponse> {
+  // Join an existing match - identity comes from the JWT. `pickHandLater` is the SelectHand flow: joining seats the
+  // second player and files no hand, so both of them can pick at the same time and send their five through
+  // `setMatchHand`. A `cardIds` list files the hand right here instead (an older client), and neither draws a random
+  // hand on the server.
+  async joinMatch(
+    matchId: number,
+    options: { cardIds?: number[]; pickHandLater?: boolean } = {}
+  ): Promise<JoinMatchResponse> {
     const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}/join`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
+        cardIds: options.cardIds,
+        pickHandLater: options.pickHandLater,
+      }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Failed to join match');
+    }
+    return response.json();
+  }
+
+  // File the five cards a player picked once the match had both players. Both sides of a Quick Match call this, and
+  // it is what makes the match ready: the server replaces the caller's unused rows, so a retry can never double the
+  // hand.
+  async setMatchHand(matchId: number, cardIds: number[]): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}/hand`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ cardIds }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Failed to file your hand');
+    }
+  }
+
+  // Give up on a waiting match nobody has joined yet (the Lobby Cancel button).
+  async cancelMatch(matchId: number): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}/cancel`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({}),
     });
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to join match');
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Failed to cancel the search');
     }
-    return response.json();
-  } // Get match details
+  }
+
+  // Get match details
   async getMatch(matchId: number): Promise<GetMatchResponse> {
     const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}`, {
       headers: getAuthHeaders(),
