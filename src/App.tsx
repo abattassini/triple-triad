@@ -10,6 +10,8 @@ import { Welcome } from './pages/Welcome';
 import { MatchPage } from './pages/MatchPage';
 import { AccountCreation } from './pages/AccountCreation';
 import { SignIn } from './pages/SignIn';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { ResetPassword } from './pages/ResetPassword';
 import { useAuth } from './contexts/AuthContext';
 
 // Full-screen loader shown while the persisted session is being restored.
@@ -84,6 +86,26 @@ function App() {
           element={
             <PublicOnlyRoute>
               <SignIn />
+            </PublicOnlyRoute>
+          }
+        />
+        {/* Password recovery. Both are public-only, and both sit above the catch-all below — a reset link arriving
+            from an email lands on /reset-password with ?token=…, which must reach this route rather than be
+            redirected to the Lobby. The GitHub Pages 404 shim (public/404.html + index.html) is what keeps that
+            deep link working on a static host. */}
+        <Route
+          path="/forgot-password"
+          element={
+            <PublicOnlyRoute>
+              <ForgotPassword />
+            </PublicOnlyRoute>
+          }
+        />
+        <Route
+          path="/reset-password"
+          element={
+            <PublicOnlyRoute>
+              <ResetPassword />
             </PublicOnlyRoute>
           }
         />

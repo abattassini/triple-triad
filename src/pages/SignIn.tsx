@@ -196,6 +196,11 @@ export const SignIn: React.FC = () => {
             </Button>
           </Box>
 
+          {/* The only way into recovery, so it sits next to the form rather than buried in a menu. */}
+          <Button variant="text" color="primary" onClick={() => navigate('/forgot-password')}>
+            Forgot password?
+          </Button>
+
           <Button
             variant="text"
             color="inherit"

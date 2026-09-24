@@ -404,6 +404,35 @@ class ApiService {
     return response.json();
   }
 
+  // Start a password recovery. The backend answers identically whether or not the address has an account (that is the
+  // point — the endpoint must not become a way to discover who has one), so a resolved promise means "asked", not
+  // "sent": the player is told to check their inbox either way.
+  async forgotPassword(email: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/player/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!response.ok) {
+      throw new Error('Could not request a reset code. Please try again.');
+    }
+  }
+
+  // Finish a recovery with the code from the email and the password to set. Failures here ARE specific ("that code is
+  // not valid"), deliberately: the code is the proof of ownership, so telling the holder it is wrong leaks nothing —
+  // and a player who mistyped needs to be told.
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/api/player/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Could not reset the password. Please try again.');
+    }
+  }
+
   // Get the authenticated player's profile
   async getMe(): Promise<Player> {
     const response = await fetch(`${API_BASE_URL}/api/player/me`, {
