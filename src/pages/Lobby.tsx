@@ -10,13 +10,6 @@ import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
 import './Lobby.scss';
 
-/**
- * Whether two rule sets are the same rules, regardless of order: the backend sends them in enum order while the
- * client's constants may list them differently.
- */
-const sameRuleSet = (left: MatchRule[], right: MatchRule[]): boolean =>
-  left.length === right.length && left.every(rule => right.includes(rule));
-
 /** Where the Quick Match flow is: idle → the rules modal → searching → picking → waiting → the board. */
 type MatchPhase = 'idle' | 'searching' | 'picking' | 'waiting';
 
@@ -208,32 +201,25 @@ export const Lobby: React.FC = () => {
     setIsStarting(true);
 
     try {
-      // Only a waiting match that plays by exactly these rules may be joined, so the option the player picked is
-      // the match they get; a waiting match with other rules (or none) means starting our own. Our *own* waiting
-      // match is never a candidate: the server refuses a join into it ("Cannot join your own match"), which would
-      // leave the player stuck on their own ghost — and the create below gives it up anyway.
-      const waitingMatches = await apiService.getWaitingMatches();
-      const compatible = waitingMatches.find(
-        match => match.player1Id !== login && sameRuleSet(match.rules, rules)
-      );
+      // One call. The server looks for an opponent already waiting under exactly these rules and seats us in their
+      // match, or starts a match for us to be found in — and it has to be the server's decision rather than ours.
+      // The old flow read the waiting list here and wrote in a separate request, so two players searching at the same
+      // instant could both read "nobody is waiting" and each start a match, leaving the two of them waiting for each
+      // other. Neither of them ever looked again.
+      const { match } = await apiService.quickMatch(rules);
+      await enterRoom(match.id);
 
-      if (compatible) {
-        // Somebody is waiting: joining seats us (there is no hand in this call) and both of us pick from here.
-        const joined = await apiService.joinMatch(compatible.id, { pickHandLater: true });
-        await enterRoom(joined.match.id);
+      setMatchId(match.id);
 
-        setMatchId(joined.match.id);
+      if (match.status === 'active') {
+        // Somebody was waiting and we were seated in their game: both players exist now, so the picker opens here and
+        // the other side's is opened by its MatchJoined push.
         setPhase('picking');
         return;
       }
 
-      // Nothing waiting with these rules: create one and keep the tile spinning until somebody joins. It is created
-      // without a hand on purpose — the pick comes once the match has both players.
-      const created = await apiService.createMatch(undefined, rules, { pickHandLater: true });
-      await enterRoom(created.match.id);
-
-      setMatchId(created.match.id);
-      console.log('Waiting for opponent...', created.match.id);
+      // Nobody compatible was waiting, so we are the one being found and the tile keeps spinning until somebody joins.
+      console.log('Waiting for opponent...', match.id);
     } catch (error) {
       console.error('Quick match error:', error);
       endSearch(`Failed to start quick match: ${(error as Error).message}`);

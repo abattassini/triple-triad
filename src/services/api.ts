@@ -304,6 +304,26 @@ class ApiService {
     return response.json();
   }
 
+  // Quick Match: ask to be put into a game. The server looks for an opponent already waiting under exactly these
+  // rules and seats us in their match, or starts one for us to be found in — one call, because the decision has to be
+  // the server's. A client that reads the waiting list and then writes separately lets two players searching at the
+  // same instant both conclude that nobody is waiting and start a match each, leaving them waiting for each other.
+  //
+  // The answer is the same shape as create/join: `status` is `waiting` when we are the one who will be found, `active`
+  // when we were seated in somebody's waiting match and the picker can open straight away.
+  async quickMatch(rules: MatchRule[]): Promise<JoinMatchResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/game/match/quick`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ rules }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Failed to start the match');
+    }
+    return response.json();
+  }
+
   // File the five cards a player picked once the match had both players. Both sides of a Quick Match call this, and
   // it is what makes the match ready: the server replaces the caller's unused rows, so a retry can never double the
   // hand.
