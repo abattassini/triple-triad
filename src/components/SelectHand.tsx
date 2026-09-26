@@ -15,6 +15,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RedeemIcon from '@mui/icons-material/Redeem';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import { BareModal } from './BareModal';
 import { CardTile } from './CardTile';
 import {
   CARD_LEVELS,
@@ -182,6 +183,15 @@ export const SelectHand: React.FC<SelectHandProps> = ({
   const [expandedLevels, setExpandedLevels] = useState<number[]>(CARD_LEVELS);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // The confirmation step the fifth pick earns (§3.1): open on the *edge* into five, never on the state of being at
+  // five — that state stays true after a Go back, so an effect keyed on it would reopen the modal the instant it
+  // closed and the player could never reach the cards.
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [returnedFromConfirm, setReturnedFromConfirm] = useState(false);
+  const wasReady = useRef(false);
+  // Where focus goes on the way back out of the confirmation (§3.8): the card button that opened it is gone from the
+  // DOM by then, so the shell's own focus restore would land nowhere.
+  const continueButtonRef = useRef<HTMLButtonElement | null>(null);
 
   /** Opens the picker: the summary for the headers and the whole collection for the rows, one request each. */
   const load = useCallback(() => {
@@ -232,12 +242,49 @@ export const SelectHand: React.FC<SelectHandProps> = ({
   const canPlay = ownedDistinct >= HAND_SIZE;
   const isReady = selected.length === HAND_SIZE;
 
-  /** Picking is one-way on the card itself: it leaves its row for a slot, and only the slot sends it back (§3.10). */
-  const pick = (row: OwnedCard) =>
-    setSelected(current => (current.length >= HAND_SIZE ? current : [...current, row]));
+  // The edge, not the level (§3.1): `isReady` stays true after a Go back, so this opens the confirmation exactly once
+  // per transition into five — a pick, or a swap that lands on five again — and never reopens it as it closes.
+  useEffect(() => {
+    if (isReady && !wasReady.current) {
+      setIsConfirmOpen(true);
+      setReturnedFromConfirm(false);
+    }
+    wasReady.current = isReady;
+  }, [isReady]);
 
-  const unpick = (cardId: number) =>
+  // A hand the server refuses comes back as the caller's `error`, and the alert it feeds is in this panel, behind the
+  // confirmation: step aside for it so the reason is what the player reads (§3.6).
+  useEffect(() => {
+    if (error) {
+      setIsConfirmOpen(false);
+    }
+  }, [error]);
+
+  /**
+   * Picking is one-way on the card itself: it leaves its row for a slot, and only the slot sends it back (§3.10). It
+   * also ends the back-from-the-confirmation state, which described the hand as it stood a moment ago (§3.4).
+   */
+  const pick = (row: OwnedCard) => {
+    setReturnedFromConfirm(false);
+    setSelected(current => (current.length >= HAND_SIZE ? current : [...current, row]));
+  };
+
+  /** The other way a hand changes: a slot gives its card back, which also ends that same note. */
+  const unpick = (cardId: number) => {
+    setReturnedFromConfirm(false);
     setSelected(current => current.filter(row => row.card.id !== cardId));
+  };
+
+  /**
+   * The non-decision way out of the confirmation (§3.4): back to the cards, with a line that says nothing was lost. The
+   * explicit focus matters — the option button that opened the modal no longer exists, so the shell would restore focus
+   * to nothing and it would fall to `<body>` (§3.8).
+   */
+  const goBackToPicking = () => {
+    setIsConfirmOpen(false);
+    setReturnedFromConfirm(true);
+    continueButtonRef.current?.focus();
+  };
 
   const handleLevelToggle = (level: number, isExpanded: boolean) => {
     setExpandedLevels(current =>
@@ -304,6 +351,13 @@ export const SelectHand: React.FC<SelectHandProps> = ({
         </Alert>
       )}
 
+      {/* Only ever rendered on the way back from the confirmation, and only while it is closed: it is about the hand
+          the player is looking at, so the next pick or unpick clears it (§3.4). */}
+      {returnedFromConfirm && !isConfirmOpen && (
+        <Alert severity="info" className="select-hand__notice">
+          {'Nothing is final yet: tap a slot to send that card back, then pick another.'}
+        </Alert>
+      )}
       {isLoading ? (
         <Box className="select-hand__loading">
           <CircularProgress sx={{ color: '#4a9eff' }} />
@@ -422,10 +476,11 @@ export const SelectHand: React.FC<SelectHandProps> = ({
           <Button
             variant="contained"
             size="large"
+            ref={continueButtonRef}
             className="select-hand__continue"
             disabled={isConfirming}
             startIcon={isConfirming ? <CircularProgress size={18} color="inherit" /> : undefined}
-            onClick={() => onConfirm(selected.map(row => row.card.id))}
+            onClick={() => setIsConfirmOpen(true)}
           >
             {isConfirming ? 'Starting…' : 'Continue'}
           </Button>
@@ -436,6 +491,53 @@ export const SelectHand: React.FC<SelectHandProps> = ({
           </Button>
         )}
       </Box>
+
+      {/* The confirmation (§3.2): the same five picks, as cards, with the two ways on. It reuses the app's one overlay
+          and stacks inside the picker's own shell, so Esc and a backdrop click land on `goBackToPicking` — unless the
+          hand is already being filed, when the server owns the outcome and neither does anything (§3.8). */}
+      <BareModal
+        open={isConfirmOpen}
+        onClose={goBackToPicking}
+        dismissable={!isConfirming}
+        maxWidth="sm"
+        className="select-hand__confirm"
+        ariaLabel="Confirm your hand"
+      >
+        <Typography variant="h6" className="select-hand__confirm-title">
+          Confirm your hand
+        </Typography>
+        <Typography variant="body2" className="select-hand__confirm-caption">
+          {'These five cards go into the match.'}
+        </Typography>
+        <Box className="select-hand__confirm-slots">
+          {selected.map(row => (
+            <Box key={row.card.id} className="select-hand__confirm-card">
+              <CardTile image={row.card.image} name={row.card.name} />
+            </Box>
+          ))}
+        </Box>
+        <Box className="select-hand__confirm-actions">
+          <Button
+            variant="contained"
+            size="large"
+            className="select-hand__confirm-yes"
+            disabled={isConfirming}
+            startIcon={isConfirming ? <CircularProgress size={18} color="inherit" /> : undefined}
+            onClick={() => onConfirm(selected.map(row => row.card.id))}
+          >
+            {isConfirming ? 'Starting…' : 'Confirm'}
+          </Button>
+          <Button
+            variant="text"
+            color="inherit"
+            className="select-hand__confirm-back"
+            disabled={isConfirming}
+            onClick={goBackToPicking}
+          >
+            Go back to my cards
+          </Button>
+        </Box>
+      </BareModal>
     </Box>
   );
 };

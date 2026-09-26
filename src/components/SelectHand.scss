@@ -66,9 +66,17 @@ $slot-max: 110px;
        under it — measured as a stray arrow floating on top of the fifth slot. */
     z-index: 2;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, $slot-max));
+    /* Nine tracks of a third-card each, every box spanning three of them (§3.13). A three-track span is exactly one of
+       the three columns this row was built on (`3 * (W - 8g) / 9 + 2g` == `(W - 2g) / 3`), so the first row and every
+       card size are unchanged — and the remainder row becomes placeable, which one shared set of columns cannot do: at
+       the second track the pair outer margins come out as `(W + g) / 9` and its middle gap as `(W + 10g) / 9`, which are
+       exactly `free / 3` and `g + free / 3` for that row — what a wrapping flex row with `justify-content: space-evenly`
+       leaves a two-card line. That is `space-evenly`, not `space-around`: every space a row has comes out equal, and the
+       row is centred. Where `$slot-max` caps the card (a viewport above roughly 450px, still below the 600px
+       breakpoint) the box is narrower than its cell and the leftover shows as spacing inside it, so those rows stay
+       centred but land a few pixels off the ideal split — measured in §10.4. */
+    grid-template-columns: repeat(9, minmax(0, 1fr));
     gap: 0.5rem;
-    justify-content: space-around;
     justify-items: center;
     margin: 0 auto 1.25rem;
     padding-top: 0.35rem;
@@ -76,9 +84,37 @@ $slot-max: 110px;
     background: #182240;
     border-bottom: 1px solid rgba(74, 158, 255, 0.15);
 
+    /* The box is what spans three tracks; the card inside it still stops at `$slot-max` and is centred by
+       `justify-items`, which is what keeps both rows' cards the same size. */
+    > * {
+      grid-column: span 3;
+    }
+
+    /* The remainder row of the 3 + 2 shape: the last two boxes, on the tracks that give them their own `space-evenly`
+       (§3.13). */
+    > :nth-child(4) {
+      grid-column: 2 / span 3;
+      grid-row: 2;
+    }
+
+    > :nth-child(5) {
+      grid-column: 6 / span 3;
+      grid-row: 2;
+    }
+
+    /* One line of five from 600px up, where there is room for all of them: five columns of one card each with
+       `space-around` spending whatever the caps leave, and the spans and the two placements above are undone. */
     @media (min-width: 600px) {
       grid-template-columns: repeat(5, minmax(0, $slot-max));
+      justify-content: space-around;
       gap: 0.75rem;
+
+      > *,
+      > :nth-child(4),
+      > :nth-child(5) {
+        grid-column: auto;
+        grid-row: auto;
+      }
     }
   }
 
@@ -160,6 +196,11 @@ $slot-max: 110px;
   }
 
   &__alert {
+    margin-bottom: 1rem;
+  }
+  /* The line the confirmation leaves behind when it is dismissed with "go back" (§3.4): an alert, so it keeps the
+     alert's spacing above the grid. It is rendered only while that state is on, so nothing else has to hide it. */
+  &__notice {
     margin-bottom: 1rem;
   }
 
@@ -555,6 +596,146 @@ $slot-max: 110px;
   }
 
   &__cancel {
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+
+  /* ── The confirmation step: the five picks, filed or sent back (§3.2) ───────── */
+
+  /* `BareModal`'s dialog has no surface of its own, so the panel brings the one the picker and the waiting panel use
+     — border, radius, gradient — with the picker's own padding steps, because this is a card panel too. It is a
+     sibling of `.select-hand` in the DOM (the shell wraps each of them the same way), which is also why these rules
+     are flat here instead of nested under `.select-hand` in the stylesheet. */
+  &__confirm {
+    width: 100%;
+    padding: 1.25rem;
+    border: 2px solid #3a3a5e;
+    border-radius: 12px;
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    text-align: center;
+
+    /* The narrowest phones get the deal the picker's own panel does: the padding gives way, never the cards. */
+    @media (max-width: 359px) {
+      padding: 0.6rem;
+    }
+
+    @media (min-width: 900px) {
+      padding: 1.75rem;
+    }
+  }
+
+  &__confirm-title {
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+  }
+
+  &__confirm-caption {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 1rem;
+  }
+
+  /* The picks row's own recipe (§3.11): three columns on a phone, five from 600px up, each capped at one card and
+     the leftover width spread around it — so a confirmed card is drawn at the size it had in its slot. */
+  &__confirm-slots {
+    display: grid;
+    /* The same recipe the picks row above uses, `$slot-max` and the nine-track / three-span arithmetic included
+       (§3.13): a confirmed card is drawn at the size, and in the place, it had in its slot. Duplicated rather than
+       shared because this file uses no mixins or placeholders; the two blocks have to keep agreeing on `$slot-max`. */
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+    gap: 0.5rem;
+    justify-items: center;
+    margin: 0 auto 1.25rem;
+
+    > * {
+      grid-column: span 3;
+    }
+
+    > :nth-child(4) {
+      grid-column: 2 / span 3;
+      grid-row: 2;
+    }
+
+    > :nth-child(5) {
+      grid-column: 6 / span 3;
+      grid-row: 2;
+    }
+
+    @media (min-width: 600px) {
+      grid-template-columns: repeat(5, minmax(0, $slot-max));
+      justify-content: space-around;
+      gap: 0.75rem;
+
+      > *,
+      > :nth-child(4),
+      > :nth-child(5) {
+        grid-column: auto;
+        grid-row: auto;
+      }
+    }
+  }
+
+  /* A confirmed card is a read, not a control: the filled slot's own box without its hover, its pointer or its focus
+     ring — nothing in this panel is clickable. */
+  &__confirm-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: $slot-max;
+    aspect-ratio: 92 / 145;
+    padding: 0.25rem;
+    border: 1px solid rgba(74, 158, 255, 0.55);
+    border-radius: 10px;
+    background: rgba(74, 158, 255, 0.12);
+
+    /* Same reason as in a slot: in a card-sized box the tile is just the art with its name over it, and the name is
+       clamped to two lines so it cannot make one box taller than its neighbours. */
+    .card-tile {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border: 0;
+      background: none;
+      overflow: hidden;
+
+      .card-tile__art {
+        max-width: 100%;
+      }
+
+      .card-tile__name {
+        font-size: 0.7rem;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+      }
+    }
+  }
+
+  &__confirm-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Confirm is the picker's Continue in all but its name, and Go back its Cancel's colour. */
+  &__confirm-yes {
+    background-color: #4a9eff !important;
+
+    &:hover {
+      background-color: #3a8eef !important;
+    }
+
+    &.Mui-disabled {
+      color: rgba(255, 255, 255, 0.6) !important;
+      background-color: rgba(74, 158, 255, 0.35) !important;
+    }
+  }
+
+  &__confirm-back {
     color: rgba(255, 255, 255, 0.6) !important;
   }
 }
