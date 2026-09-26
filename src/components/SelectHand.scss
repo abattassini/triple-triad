@@ -1,8 +1,14 @@
 /* The hand picker (SelectHand.tsx) and the modal shell around it (SelectHandModal.tsx).
-   The palette and the grid steps are the ones the rest of the house uses: `.level-section__cards` from MyCards.scss
-   for the card grid, `.pack-inventory` / `.my-cards-empty` for the panel and the accent buttons, and `.card-tile`
-   (CardTile.scss) for the cards themselves. Nothing here knows about the modal's dismissal or the matchmaking
-   around it. */
+   The palette is the one the rest of the house uses: `.pack-inventory` / `.my-cards-empty` for the panel and the
+   accent buttons, `.card-tile` (CardTile.scss) for the cards themselves. The ten level accordions are the app's
+   first use of MUI's `Accordion`, so their light defaults are overridden by class below. Nothing here knows about
+   the modal's dismissal or the matchmaking around it. */
+
+/* The widest a pick is ever drawn (§3.11): the source art's own 100px plus the slot's own 0.25rem padding and 1px
+   border on each side. Both the slots row's column cap and the slot's `max-width` below read it, so the two cannot
+   drift apart — and it is deliberately *not* a bare `110px` twice, because the number that matters is the art's. */
+$slot-max: 110px;
+
 .select-hand {
   width: 100%;
   padding: 1.25rem;
@@ -35,28 +41,50 @@
 
   /* ── The selected five, right under the title ─────────────────────────────── */
 
-  /* Fixed-size cards, dealt in the same sizes as the grid below, laid out as a centred wrapping row: one line of
-     five from the desktop width up, and 3 + 2 on a phone. While the layout is a phone's the row is capped at three
-     cards wide, so a fourth can never fit and the wrap lands on 3 + 2 rather than 4 + 1. */
+  /* Three columns on a phone, five from 600px up, so five cards can never need a third row. The rule this replaces
+     was a wrapping flex row capped at `3 * 92px + 2 * 0.6rem` (295.2px), while the room it actually had was
+     `viewport - 64px - 40px` — MUI's `fullWidth` dialog paper is `calc(100% - 64px)` and `BareModal` cancels only
+     the margin — i.e. 286px at 390px, 271px at 375px and 236.8px at 320px. Measured before this change: 2 + 2 + 1 on
+     every phone from 320px to 402px, and 4 + 1 at 600px. `minmax(0, 1fr)` shrinks a column instead of pushing a
+     sibling onto the next line, so the row's shape no longer depends on that arithmetic at all.
+
+     Sticky at the top of the shell because the accordions below are taller than it: `.bare-modal` is the scroll
+     container, so this is what keeps the five picks visible while a level is browsed. Nothing between this row and
+     that container may clip overflow, or sticky dies silently.
+
+     The columns are **capped at one card** (`$slot-max`) and the leftover width is spread around them
+     (`justify-content: space-around`), rather than split among five `1fr` columns that are wider than the cards in
+     them (§3.11). On a 1140px row the two arrangements put the boxes in exactly the same places — `justify-items:
+     center` already centred each box in its own column — but only this one says the cap out loud, and only this one
+     stops growing the column once the card has reached the art's own size. A phone is unaffected: at 320px the three
+     columns share 232.8px, well under the cap, and shrink exactly as they did. */
   &__slots {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 0.6rem;
-    max-width: calc(3 * 92px + 2 * 0.6rem);
+    position: sticky;
+    top: 0;
+    /* Above the level accordions, and their own internals are kept in their own layer by `isolation` below: without
+       the isolation a row's arrow (z-index 2, inside the level) paints over this pinned row as an accordion scrolls
+       under it — measured as a stray arrow floating on top of the fifth slot. */
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, $slot-max));
+    gap: 0.5rem;
+    justify-content: space-around;
+    justify-items: center;
     margin: 0 auto 1.25rem;
+    padding-top: 0.35rem;
+    padding-bottom: 0.6rem;
+    background: #182240;
+    border-bottom: 1px solid rgba(74, 158, 255, 0.15);
 
     @media (min-width: 600px) {
-      /* A step wider and a bigger gap: from here five cards want 568px of room, which this layout has from a 612px
-         viewport up — the room the panel has is what wraps the row, not the cap. */
+      grid-template-columns: repeat(5, minmax(0, $slot-max));
       gap: 0.75rem;
-      max-width: none;
     }
   }
 
   /* One slot: a filled one is the picked card and puts it back when clicked, an empty one shows its number. Both are
-     the same card-sized box, so the row does not move as cards land in it. */
+     the same fluid box — the column's width, never wider than the source art — so the row cannot move as cards land
+     in it. */
   &__slot {
     display: flex;
     align-items: center;
@@ -64,8 +92,15 @@
     /* Border-box explicitly: the width below has to be the card's size whether or not the host page resets it (the
        picker is written to be dropped onto a bare page, per the component's own note). */
     box-sizing: border-box;
-    width: 92px;
-    min-height: 145px;
+    width: 100%;
+    /* One card, never more (§3.11): `$slot-max` is the art's own 100px plus this box's 0.25rem padding and 1px border
+       on each side, so at full size the art inside is the source image exactly — `100x127`, which is also the widest a
+       slot may ever be. Below that (any phone) the cards shrink instead of the row growing a third line, and the art
+       shrinks with them. */
+    max-width: $slot-max;
+    /* The phone box this used to be fixed at (92x145), kept as a ratio so a filled slot and an empty one are the same
+       height. */
+    aspect-ratio: 92 / 145;
     padding: 0.25rem;
     border: 1px dashed rgba(74, 158, 255, 0.35);
     border-radius: 10px;
@@ -77,22 +112,6 @@
       border-color 160ms ease,
       background 160ms ease,
       transform 160ms ease;
-
-    /* The same four steps `.select-hand__grid` and MyCards' `.level-section__cards` use. */
-    @media (min-width: 600px) {
-      width: 104px;
-      min-height: 161px;
-    }
-
-    @media (min-width: 900px) {
-      width: 120px;
-      min-height: 181px;
-    }
-
-    @media (min-width: 1400px) {
-      width: 136px;
-      min-height: 201px;
-    }
 
     &--filled {
       border-style: solid;
@@ -116,12 +135,26 @@
        has nothing to show in a slot anyway. */
     .card-tile {
       width: 100%;
+      height: 100%;
       padding: 0;
       border: 0;
       background: none;
+      /* The slot's `aspect-ratio` is the fixed box; clipping here is what stops a two-line name from making a filled
+         slot taller than an empty one. */
+      overflow: hidden;
 
       .card-tile__art {
         max-width: 100%;
+      }
+
+      .card-tile__name {
+        font-size: 0.7rem;
+        /* Two lines at most, ellipsised: a phone slot is only ~74-90px wide. */
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
       }
     }
   }
@@ -136,47 +169,281 @@
     padding: 2rem 0;
   }
 
-  /* ── The level picker and the cards of that level ─────────────────────────── */
+  /* ── The ten level accordions, each holding the cards of that level ────────── */
 
-  &__picker {
+  /* This is the codebase's first `Accordion`, so every MUI default (light surface, 16px gutter, the divider pseudo
+     element) has to go. The overrides are on `.MuiAccordion*` classes because emotion's generated class beats a
+     plain rule on equal specificity — the same reason `.MuiButton-outlined` is styled that way above. */
+  &__level {
+    &.MuiAccordion-root {
+      /* The containing block for the head overlay below, and its own stacking context, so nothing inside a level (the
+         head, the row's scrims and arrows all carry a `z-index`) can ever paint above the sticky picks row as the
+         accordion scrolls under it. */
+      position: relative;
+      isolation: isolate;
+      /* The head is out of the flow, so a level whose body is empty **or collapsed** is its head and nothing else: without
+         this the box would be its two 1px borders and the head would hang over the level below — measured as a 2px
+         collapsed level with level 10's head printed on top of level 9's. */
+      min-height: 2.6rem;
+      margin: 0 0 0.6rem;
+      border: 1px solid #3a3a5e;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.18);
+      background-image: none;
+      color: #fff;
+
+      &::before {
+        display: none;
+      }
+
+      &.Mui-expanded {
+        margin: 0 0 0.6rem;
+      }
+    }
+
+    /* A level with nothing to show is its head and nothing else (§3.10): either the player owns nothing in it, or every
+       card they own there is picked and sitting in a slot. Either way it carries no chevron — there is nothing one could
+       open. */
+    &--empty {
+      background: rgba(0, 0, 0, 0.08);
+    }
+
+    /* The head (§3.9): the level's name, its counts and its chevron riding **over** the top of that level's cards
+       rather than taking a line above them. No background of its own — the cards show through it — and
+       `pointer-events: none`, which is what makes the chevron a level's only control: the label is not clickable, and
+       the cards the head covers still take their own clicks (measured: a click at the label's centre lands on the card
+       behind it and no level opens).
+
+       The `z-index` is inside the level's own context (`isolation` above): above the cards, the scrim (`z-index: 1`) and
+       the arrows (`z-index: 2`), and still below the picks row.
+
+       The head itself still has no background: the one piece of it that carries text carries the backdrop (§3.10), so
+       everything else about it — the gaps, and the room the chevron sits in — still shows the cards through. */
+    .select-hand__level-head {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      min-height: 2.6rem;
+      padding: 0 0.35rem 0 0.75rem;
+      pointer-events: none;
+    }
+
+    .MuiAccordionDetails-root {
+      padding: 0 0.75rem 0.75rem;
+    }
+  }
+
+  /* The head's text, in one pill (§3.10): the name, the counts and the picked count keep their backdrop, and it hugs
+     them — a bar across the head was rejected in §3.9, and this is the middle way. `pointer-events: none` is inherited
+     from the head, so the pill is still not a control: a click on it lands on the card behind it, as the §10.9 probe has
+     it. The white-on-art `text-shadow` the pre-§3.10 head needed is gone: the backdrop is what the text reads against. */
+  &__level-text {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    gap: 0.5rem 1rem;
-    margin-bottom: 1rem;
+    gap: 0.45rem;
+    padding: 0.1rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(8, 12, 24, 0.72);
   }
 
-  &__picker-select {
-    min-width: 240px;
+  &__level-title {
+    font-weight: 700;
   }
 
-  &__picker-hint {
+  &__level-count {
     color: rgba(255, 255, 255, 0.6);
   }
 
+  &__level-picked {
+    color: #ffd166;
+  }
+
+  /* The level's only control (§3.9): the chevron that opens and closes it. The head it sits in is
+     `pointer-events: none`, so this is the one thing in it that takes a click — and a dark disc behind the glyph is
+     what keeps it legible over card art, the same treatment the row arrows get (§3.7). `aria-expanded` is the state the
+     button already carries, so it is what turns the glyph over. Borderless and 36px across with a 24px glyph (§3.10):
+     the ring it used to wear read as a frame on a card that already has one, and the sizes are the whole affordance. */
+  &__level-toggle {
+    &.MuiIconButton-root {
+      /* `margin-left: auto` and not a plain rule on the class: MUI's IconButton root sets `margin: 0` and an emotion
+         class beats a plain rule of equal specificity (the same trap as `.MuiButton-outlined` above and the arrows'
+         `position`). Measured with the plain rule: `margin-left` computed to 0px, so the chevron sat right after the
+         counts instead of at the level's right edge — and it *moved* every time the `· N picked` text changed.
+         `pointer-events` is not overridden by MUI, so that half stays a plain rule. */
+      margin-left: auto !important;
+      width: 36px !important;
+      height: 36px !important;
+      color: #4a9eff !important;
+      background-color: rgba(13, 27, 42, 0.72) !important;
+
+      &:hover {
+        background-color: rgba(24, 34, 64, 0.95) !important;
+      }
+
+      svg {
+        transition: transform 160ms ease;
+      }
+
+      /* The same designed ring the cards and slots get, rather than Chrome's grey default: this is the level's only
+         control, so keyboard focus on it has to be obvious. */
+      &:focus-visible {
+        outline: 2px solid #4a9eff !important;
+        outline-offset: 2px;
+      }
+
+      &[aria-expanded='true'] svg {
+        transform: rotate(180deg);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        svg {
+          transition: none;
+        }
+      }
+    }
+
+    pointer-events: auto;
+  }
+
+  /* The retry on the one loading failure the picker has left (both opening requests are fired together, so one
+     retry covers them). */
+  &__retry {
+    color: inherit !important;
+  }
+
+  /* The level's cards: **one row, always**, scrolled sideways. A level holds 17-27 cards and the modal gives the row
+     233-1276px, so nothing about the width can be allowed to fold it onto a second line — `flex-wrap: nowrap` with
+     non-shrinking cards makes that structural, the same way §3.1's grid count made the slots row structural. The
+     118px card is the source art's own 100px plus the tile's 0.5rem padding and 1px border on each side, and the
+     phone steps it down with `clamp` so ~2.5 cards stay visible instead of two. */
+  &__row {
+    position: relative;
+  }
+
   &__grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+    display: flex;
+    flex-wrap: nowrap;
     gap: 0.6rem;
     min-height: 120px;
+    overflow-x: auto;
+    /* `overflow-x: auto` computes the other axis to `auto` too, which would clip the hover lift and the tiles'
+       shadows — the padding below is what leaves them room, so the y axis is closed explicitly. */
+    overflow-y: hidden;
+    /* A sideways drag inside the modal must not drag the modal, or the page behind it, with it (iOS). */
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 0.25rem;
+    padding: 0.35rem 0.25rem 0.5rem;
 
-    @media (min-width: 600px) {
-      grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-      gap: 0.75rem;
+    @media (prefers-reduced-motion: no-preference) {
+      scroll-behavior: smooth;
     }
 
-    @media (min-width: 900px) {
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    /* Desktop keeps a thin, visible bar — for a mouse it is the plainest "there is more" signal there is; iOS and
+       Android use their own overlay bar, which these rules do not interfere with. */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(74, 158, 255, 0.45) rgba(255, 255, 255, 0.06);
+
+    &::-webkit-scrollbar {
+      height: 8px;
     }
 
-    @media (min-width: 1400px) {
-      grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
-      gap: 1rem;
+    &::-webkit-scrollbar-track {
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border-radius: 999px;
+      background: rgba(74, 158, 255, 0.45);
+
+      &:hover {
+        background: rgba(74, 158, 255, 0.7);
+      }
+    }
+
+    /* It is a scroll region full of buttons, so a focus ring on the first or last card must not be clipped. */
+    &:focus-visible {
+      outline: 2px solid #4a9eff;
+      outline-offset: 2px;
     }
   }
 
-  /* One card of the level: the tile itself is the button, so all that is added here is the lift on hover. */
+  /* The scrims and the arrows are the affordance (§3.7): a card cut off at the edge says "there is more this way",
+     the scrim says it in colour, and the arrow is what a mouse can actually click. Both are rendered only in the
+     direction that can still scroll, so nothing sits there pretending to be inert. */
+  &__row-scrim {
+    position: absolute;
+    top: 0;
+    /* The scrollbar's strip stays clear. */
+    bottom: 0.5rem;
+    z-index: 1;
+    width: 2.5rem;
+    pointer-events: none;
+
+    &--left {
+      left: 0;
+      /* The panel gradient plus the accordion's own black wash, so the scrim reads as part of the surface. */
+      background: linear-gradient(90deg, rgba(20, 23, 48, 0.98) 0%, rgba(20, 23, 48, 0) 100%);
+    }
+
+    &--right {
+      right: 0;
+      background: linear-gradient(270deg, rgba(20, 23, 48, 0.98) 0%, rgba(20, 23, 48, 0) 100%);
+    }
+  }
+
+  &__row-arrow {
+    /* `.MuiIconButton-root` plus `!important` on the position, and not for style: MUI's ButtonBase root is
+       `position: relative`, and an emotion class beats a plain rule of equal specificity (the same reason
+       `.MuiButton-outlined` is styled that way above). Without both, the buttons stay in the flow — which measured as a
+       255px-tall row whose arrows sat 17px above it and 204px below it, instead of one 187px line with two centred
+       arrows.
+
+       Borderless and 40px across with a 24px glyph (§3.10), for the same reason as the level's chevron: the outlined
+       disc read as a second frame on a card that already has one, and a ring around the glyph is not what makes it
+       findable — size is. */
+    &.MuiIconButton-root {
+      position: absolute !important;
+      top: 50% !important;
+      z-index: 2;
+      width: 40px !important;
+      height: 40px !important;
+      transform: translateY(-50%);
+      background-color: rgba(13, 27, 42, 0.9) !important;
+      color: #4a9eff !important;
+
+      &:hover {
+        background-color: rgba(24, 34, 64, 0.98) !important;
+      }
+    }
+
+    &--left {
+      left: 0.1rem;
+    }
+
+    &--right {
+      right: 0.1rem;
+    }
+  }
+
+  /* One card of the row: the tile itself is the button, so all that is added here is the lift on hover and the
+     hand-full state. `flex: 0 0 auto` plus the fixed width is half of "never more than one row": a card neither
+     shrinks to fit nor wraps, so a narrow shell scrolls instead of reflowing.
+
+     A picked card leaves this row entirely (§3.10) and what is left slides up into its place, which is why `LevelRow`
+     re-measures on every pick: the scrims and the arrows are read off the element, and a row that just got shorter has
+     to drop the affordance it no longer needs. The `position: relative` that framed the old ✓ badge went with it. */
   &__option {
+    flex: 0 0 auto;
+    /* 118px is 100px of art plus the tile's furniture (§3.2); 30vw keeps ~2.5 cards visible on a phone. */
+    width: clamp(96px, 30vw, 118px);
+    scroll-snap-align: start;
     display: block;
     padding: 0;
     border: 0;
@@ -187,7 +454,8 @@
     cursor: pointer;
     transition:
       transform 160ms ease,
-      box-shadow 160ms ease;
+      box-shadow 160ms ease,
+      opacity 160ms ease;
 
     &:hover {
       transform: translateY(-3px);
@@ -198,7 +466,22 @@
       outline: 2px solid #4a9eff;
       outline-offset: 2px;
     }
+
+    /* Five cards are in and this one is not: it cannot be picked until one of them goes back. */
+    &--blocked {
+      opacity: 0.4;
+      cursor: not-allowed;
+
+      &:hover {
+        transform: none;
+        box-shadow: none;
+      }
+    }
   }
+
+  /* The `--picked` state and its ✓ badge are gone (§3.10): a picked card is in the picks row above, and the slot it
+     went into — a button the player can click, labelled `Put <name> back` — is what carries that state to them and to a
+     screen reader. Nothing in a level is a "state" that can no longer be undone from where it is shown. */
 
   /* ── Under five cards owned: no Continue, just the way to get more ─────────── */
 

@@ -5,7 +5,11 @@
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.75rem 0.5rem;
+  /* Top and sides only (§3.11): the tile *is* the card plus its name, so the box closes right under the last line.
+     The 0.75rem the bottom used to take was empty tile on every card everywhere — measured at 13px (the padding plus
+     the border) between the level/badge row and the tile's bottom edge, i.e. 12px of height the level rows, MyCards and
+     the pack reveal all paid for nothing. */
+  padding: 1rem 0.5rem 0;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(74, 158, 255, 0.25);
