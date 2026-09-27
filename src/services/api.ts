@@ -166,6 +166,37 @@ export interface PlayCardResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Turn preview — the server's answer to "what happens if I drop this card here"
+// ---------------------------------------------------------------------------
+
+// One move the player on turn may make, and what playing it would do. The fields are the ones a `CardPlayed` push
+// carries, so the board renders a previewed move through the same path it renders a push through. Two differences are
+// deliberate: `capturedCards` holds cells (a preview has no placement rows — the board flips by cell), and
+// `nextPlayer` is whose turn it *will* be, since a preview describes a board that has not happened yet.
+export interface LegalMove {
+  cardId: number;
+  x: number;
+  y: number;
+  capturedCards: Array<{ x: number; y: number }>;
+  triggeredRules: MatchRule[];
+  player1Score: number;
+  player2Score: number;
+  isGameComplete: boolean;
+  winnerId: string | null;
+}
+
+// The `LegalMoves` hub event: every move the caller may make this turn. Sent **only** to the player whose turn it is,
+// because the list is built from their hand (hidden information). `placements` is the board it was computed from — a
+// client compares it with its own filled cells and drops a list that no longer describes that turn.
+export interface LegalMovesResponse {
+  matchId: number;
+  playerId: string;
+  placements: number;
+  nextPlayer: string;
+  moves: LegalMove[];
+}
+
+// ---------------------------------------------------------------------------
 // Card shop
 // ---------------------------------------------------------------------------
 
