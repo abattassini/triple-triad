@@ -157,3 +157,28 @@
     }
   }
 }
+
+/* Portrait phones (PLAN-019) - five cards that fit the row, and a start that stays reachable.
+   Appended last on purpose: `overflow-x` has to beat the equal-specificity `max-width: 1199px` block above (:110 turns
+   it off with "Hide horizontal scrollbar"), and `gap`/`padding` are deliberately left to the `max-width: 480px` block
+   so that each property keeps exactly one owner. */
+@media (max-width: 1199px) and (orientation: portrait) {
+  .hand .hand-cards {
+    flex-wrap: nowrap; // A shrinking card must never start a second line
+    justify-content: safe center; // Centred when they fit, flush to the start when they don't - never clipped
+    overflow-x: auto; // What the base rule (:24) means; the mobile block above turned it off
+    overscroll-behavior-x: contain; // A swipe on the row never pans the page behind it
+  }
+
+  // Five equal shares of the row, never above the art's own 72px, with the art's ratio kept so a shrunk card is not
+  // distorted. `.hand-cards .card` (0,2,0) beats DraggableCard.scss's `.card` (0,1,0) by specificity, so this does not
+  // depend on which stylesheet Vite emits first.
+  .hand-cards .card {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 72px;
+    width: auto;
+    height: auto;
+    aspect-ratio: 72 / 99;
+  }
+}

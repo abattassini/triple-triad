@@ -31,7 +31,10 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background: linear-gradient(135deg, #0f0f23, #1a1a2e, #16213e);
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  /* Pan when the layout needs more room than the window (PLAN-019). The 320px floor above is the design's floor, so
+     nothing scrolls at or above it; below it, `hidden` used to make the layout's outer 1-21px unreachable — this is the
+     one property that decides whether a window narrower than the floor can be brought into view. */
+  overflow-x: auto;
 }
 
 #root {
