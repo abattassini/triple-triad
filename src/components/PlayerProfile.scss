@@ -1,0 +1,148 @@
+/* The opponent profile panel. It brings its own surface — the same one the picker's panels bring, because a
+   `BareModal` dialog has none (`SelectHand.scss:604` records the same reasoning) — and it brings its own width too:
+   the shell's paper is shrink-to-fit (`fullWidth` stays false, `margin: 0`), so a `width: 100%` panel would resolve
+   against an auto-sized box and come out as wide as its longest word. `min(360px, 100vw - 64px)` is definite at every
+   width: 360px on a desktop, and on a phone the viewport less the 32px a side MUI's dialog keeps. Nothing here is a
+   link: every figure is read-only text, which is the whole difference between this panel and `PlayerStats`. */
+
+.player-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  width: min(360px, calc(100vw - 64px));
+  box-sizing: border-box;
+  padding: 1.5rem 1.25rem;
+  color: #fff;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 2px solid #3a3a5e;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+  &__avatar {
+    border: 2px solid #4a9eff;
+    background: #16213e;
+    flex-shrink: 0;
+  }
+
+  &__name {
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    // A long login has to wrap inside the panel rather than widen it.
+    overflow-wrap: anywhere;
+  }
+
+  // The level is drawn exactly as `PlayerStats` draws it — the same line, over an unstyled `LinearProgress` (the
+  // theme's own primary bar), so one number cannot look like two different things on two screens.
+  &__level {
+    width: 100%;
+  }
+
+  &__level-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+    text-align: center;
+  }
+
+  // The card count reads like the Lobby's 🃏 pill, minus the invitation: same colours and shape, no cursor, no hover,
+  // and a plain span — there is nothing to open, so nothing pretends to be a button.
+  &__cards {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(74, 158, 255, 0.12);
+    border: 1px solid rgba(74, 158, 255, 0.4);
+    color: #4a9eff;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  &__cards-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  &__cards-value {
+    line-height: 1;
+  }
+
+  &__cards-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  // Wins / losses / ties across one row, using the Lobby's tile values. At a 320px viewport the panel is 216px
+  // inside its padding, so the tracks stay `1fr` and each is ~64px: the labels are the only thing that can wrap.
+  &__record {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+
+  &__tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+    padding: 0.75rem 0.25rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid #3a3a5e;
+
+    &-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    &-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    &--wins .player-profile__tile-value {
+      color: #4eff4a;
+    }
+
+    &--losses .player-profile__tile-value {
+      color: #ff6b6b;
+    }
+
+    &--ties .player-profile__tile-value {
+      color: #ffcc00;
+    }
+  }
+
+  // Waiting and failure keep the panel's surface, so the dialog never changes shape while the call is in flight.
+  &__spinner {
+    color: #4a9eff;
+  }
+
+  &__caption {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+  }
+
+  &__error {
+    color: #ff9494;
+    text-align: center;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+}

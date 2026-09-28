@@ -167,6 +167,36 @@
   letter-spacing: 0.08em;
 }
 
+/* The opponent's name in the hand's title (PLAN-020). It is a `<button>` because it opens the profile panel, styled
+   to read as part of the title it sits in: the type and colour are inherited (the opponent's title is red), the
+   button chrome is removed, and the hover/focus states are what say it is clickable. The score next to it stays plain
+   text, which is why only the name is wrapped. */
+.match-opponent-name {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: underline dotted rgba(255, 255, 255, 0.35);
+  text-underline-offset: 3px;
+  transition:
+    color 160ms ease,
+    text-decoration-color 160ms ease;
+
+  &:hover {
+    color: #7ab8ff;
+    text-decoration-color: currentColor;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4a9eff;
+    outline-offset: 2px;
+  }
+}
+
 /* Full-field effect when a rule fires on a played card (SAME today; Combo/Plus later).
    It covers the whole play area, so it must never capture pointer events or it would block
    board drag & drop for as long as it is on screen. */

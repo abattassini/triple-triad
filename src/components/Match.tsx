@@ -22,6 +22,7 @@ import {
   Button,
 } from '@mui/material';
 import { Hand } from './Hand';
+import { PlayerProfileModal } from './PlayerProfileModal';
 import { Board } from './Board';
 import {
   apiService,
@@ -179,6 +180,9 @@ export const Match: React.FC = () => {
   const [abandonedReason, setAbandonedReason] = useState<string | null>(null);
   // Rule that fired on the most recent move (e.g. SAME), flashed briefly as feedback.
   const [lastTriggeredRule, setLastTriggeredRule] = useState<string | null>(null);
+  // Whose profile the opponent panel is showing, or null while it is closed (PLAN-020). Only ever a human opponent's
+  // login — the CPU is a sentinel, not somebody to look up.
+  const [profileLogin, setProfileLogin] = useState<string | null>(null);
 
   // The moves the server says this player may make this turn, and what each would do (see `requestPreview`). A ref, not
   // state: the drop reads it while dragging and it may never trigger a render of its own — the board is the only thing
@@ -266,7 +270,10 @@ export const Match: React.FC = () => {
     previewRequestRef.current = parseInt(matchId);
 
     requestLegalMovesSignalR(parseInt(matchId)).catch(error => {
-      console.warn('Turn preview unavailable — the board will wait for the server as before:', error);
+      console.warn(
+        'Turn preview unavailable — the board will wait for the server as before:',
+        error
+      );
     });
   }, [matchId, isConnected, requestLegalMovesSignalR]);
 
@@ -660,7 +667,9 @@ export const Match: React.FC = () => {
         setOpponentHand(buildOpponentHand(matchResponse.placements, userId));
         setIsMyTurn(matchResponse.match.currentPlayerTurn === userId);
         previewRef.current = null;
-        console.log('👀 Found the opponent’s move without a push (their answer came from another process)');
+        console.log(
+          '👀 Found the opponent’s move without a push (their answer came from another process)'
+        );
       } catch (error) {
         console.warn('Could not check the match while waiting for the opponent:', error);
       }
@@ -830,6 +839,10 @@ export const Match: React.FC = () => {
   const opponentName = getOpponentName();
   const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
   const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
+  // The opponent's login exactly as the match stores it (`"AI"` for the CPU — an identity rather than a name), and
+  // whether that makes them somebody whose profile can be looked up at all (PLAN-020).
+  const opponentLogin = match.player1Id === userId ? match.player2Id : match.player1Id;
+  const isCpuOpponent = opponentLogin === CPU_OPPONENT_ID;
   // Rewards granted to this player when the match completed, if the server granted any at all: a CPU match can be
   // reward-free (CpuOpponent.RewardsForCpuMatches on the server) and a loss pays 0 XP, so the dialog only shows the
   // box when there is something in it.
@@ -886,7 +899,26 @@ export const Match: React.FC = () => {
       <div className="game-layout">
         <Hand
           cards={opponentHand}
-          title={`${opponentName} - Score: ${opponentScore}`}
+          // The name is a control for a human opponent and plain text for the CPU (PLAN-020): the score beside it is
+          // never clickable, and the CPU branch renders exactly what it rendered before this plan.
+          title={
+            isCpuOpponent ? (
+              `${opponentName} - Score: ${opponentScore}`
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="match-opponent-name"
+                  aria-haspopup="dialog"
+                  title={`See ${opponentLogin}'s profile`}
+                  onClick={() => setProfileLogin(opponentLogin)}
+                >
+                  {opponentName}
+                </button>
+                {` - Score: ${opponentScore}`}
+              </>
+            )
+          }
           isOpponent={true}
           className="opponent-hand"
         />{' '}
@@ -1043,6 +1075,13 @@ export const Match: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      {/* The opponent's profile panel (PLAN-020). The dialog lives here because this is what knows the opponent's
+          login; the panel it shows knows nothing about the shell. Closing it is just clearing the login. */}
+      <PlayerProfileModal
+        open={profileLogin !== null}
+        login={profileLogin ?? ''}
+        onClose={() => setProfileLogin(null)}
+      />
     </DndContext>
   );
 };

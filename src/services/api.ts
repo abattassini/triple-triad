@@ -129,6 +129,23 @@ export interface Player {
   packsOwned?: number;
 }
 
+/**
+ * Another player's public profile: what `GET api/player/profile/{login}` answers, and everything the opponent
+ * panel draws. Deliberately narrow — it is **not** `Player`, whose `email`, `coins` and `packsOwned` are the *self*
+ * shape and never travel for someone else (`PlayerController.ToPublicProfileAsync`).
+ */
+export interface OpponentProfile {
+  login: string;
+  avatarUrl: string | null;
+  /** Raw XP. The level is derived on the client, the same way the Lobby's stats panel derives it (see `data/Levels.ts`). */
+  experience: number;
+  wins: number;
+  losses: number;
+  ties: number;
+  /** Distinct cards owned — copies held of the same card do not count. */
+  cardsOwned: number;
+}
+
 export interface SignInRequest {
   identifier: string;
   password: string;
@@ -496,6 +513,25 @@ class ApiService {
     });
     if (!response.ok) {
       throw new Error('Failed to fetch current player');
+    }
+    return response.json();
+  }
+
+  // Another player's public profile — what the opponent panel draws. A 404 is an ordinary answer here (an unknown
+  // login, which includes the CPU sentinel `AI`), so it gets its own sentence rather than the generic failure text.
+  async getPlayerProfile(login: string): Promise<OpponentProfile> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/player/profile/${encodeURIComponent(login)}`,
+      {
+        headers: getAuthHeaders(),
+      }
+    );
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`No player called ${login}.`);
+      }
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || `Could not load ${login}'s profile.`);
     }
     return response.json();
   }

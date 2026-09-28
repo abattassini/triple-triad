@@ -5,7 +5,12 @@ import './Hand.scss';
 
 interface HandProps {
   cards: LocalCard[];
-  title?: string;
+  /**
+   * The line above the cards. A node rather than a string because the opponent's name is a control on the match page
+   * (it opens their profile panel, PLAN-020) while the score beside it is not — see `Match.tsx`, which composes both.
+   * Everything this component does with it is put it in an `h3`, so a plain string still works everywhere.
+   */
+  title?: React.ReactNode;
   isOpponent?: boolean;
   className?: string;
   isMyTurn?: boolean;
