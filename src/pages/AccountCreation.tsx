@@ -16,6 +16,7 @@ import LockIcon from '@mui/icons-material/Lock';
 import PersonIcon from '@mui/icons-material/Person';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { FiArrowLeft } from 'react-icons/fi';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import './AccountCreation.scss';
@@ -309,8 +310,9 @@ export const AccountCreation: React.FC = () => {
             color="inherit"
             className="account-creation-back"
             onClick={() => navigate('/')}
+            startIcon={<FiArrowLeft />}
           >
-            {'\u2190'} Back to home
+            Back to home
           </Button>
         </form>
       </Paper>

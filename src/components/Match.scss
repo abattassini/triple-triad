@@ -1,4 +1,11 @@
 /* Match component styles - full width mobile layout */
+/* The small inline icons that replaced the match screen's emoji (the PLAN-021 review). */
+.match-icon {
+  display: inline-flex;
+  vertical-align: -0.12em;
+  margin-right: 0.35rem;
+}
+
 .game-layout {
   display: flex;
   flex-direction: column;

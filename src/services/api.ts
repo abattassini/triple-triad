@@ -42,7 +42,7 @@ export type MatchRule = 'Same' | 'Plus' | 'SameWall' | 'PlusWall';
 // 👉 To revert to basic-rules-only matches, set this to [] — nothing else needs to change.
 export const DEFAULT_MATCH_RULES: MatchRule[] = ['Same', 'Plus'];
 
-// What the Lobby's "Match with Rules" option enables: every rule the backend implements. Kept as data so the
+// What the Play page's "Match with Rules" option enables: every rule the backend implements. Kept as data so the
 // option's caption is rendered from it and a new rule needs no UI change (see plans/PLAN-009-bare-modal-and-match-choice/plan.md).
 // `DEFAULT_MATCH_RULES` above is the legacy implicit default — Quick Match now asks instead of assuming it.
 export const ALL_MATCH_RULES: MatchRule[] = ['Same', 'Plus', 'SameWall', 'PlusWall'];
@@ -137,7 +137,7 @@ export interface Player {
 export interface OpponentProfile {
   login: string;
   avatarUrl: string | null;
-  /** Raw XP. The level is derived on the client, the same way the Lobby's stats panel derives it (see `data/Levels.ts`). */
+  /** Raw XP. The level is derived on the client, the same way the stats panel derives it (see `data/Levels.ts`). */
   experience: number;
   wins: number;
   losses: number;
@@ -392,7 +392,7 @@ class ApiService {
     }
   }
 
-  // Give up on a waiting match nobody has joined yet (the Lobby Cancel button).
+  // Give up on a waiting match nobody has joined yet (the Play page's Cancel button).
   async cancelMatch(matchId: number): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/api/game/match/${matchId}/cancel`, {
       method: 'POST',

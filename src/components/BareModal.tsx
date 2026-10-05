@@ -93,7 +93,7 @@ interface BareModalLoadingProps {
 
 /**
  * The shell's own loading state: the same darkened, click-swallowing page, with a spinner where a consumer's content
- * would be — for the gap between a click and the thing that click asked for (the Lobby's rule options, and the picker
+ * would be — for the gap between a click and the thing that click asked for (Play's rule options, and the picker
  * they lead to). It lives here because the loading look belongs to the shell: every consumer waiting on a call shows
  * the same spinner in the same place instead of inventing its own.
  *

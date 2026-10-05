@@ -14,6 +14,7 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 import './SignIn.scss';
 
@@ -78,7 +79,7 @@ export const SignIn: React.FC = () => {
 
     try {
       await signIn(identifier.trim(), password);
-      navigate('/lobby');
+      navigate('/home');
     } catch (error) {
       setSubmitError((error as Error).message);
       setIsSubmitting(false);
@@ -206,8 +207,9 @@ export const SignIn: React.FC = () => {
             color="inherit"
             className="sign-in-back"
             onClick={() => navigate('/')}
+            startIcon={<FiArrowLeft />}
           >
-            {'\u2190'} Back to home
+            Back to home
           </Button>
         </form>
       </Paper>

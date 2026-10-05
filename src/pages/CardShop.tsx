@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Alert, Box, Button, CircularProgress, Container, Paper, Typography } from '@mui/material';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import RedeemIcon from '@mui/icons-material/Redeem';
+import { FiArrowLeft, FiShoppingCart } from 'react-icons/fi';
 import { cardBackUrl } from '../data/CardArt';
-import { HamburgerMenu } from '../components/HamburgerMenu';
-import { PlayerStats } from '../components/PlayerStats';
+import { PlayerWallet } from '../components/PlayerStats';
 import { apiService, type PackOffer } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import './CardShop.scss';
@@ -70,13 +70,11 @@ export const CardShop: React.FC = () => {
   }, [refreshUser]);
 
   return (
-    <Box className="card-shop">
-      <HamburgerMenu />
-
+    <Box className="card-shop app-chrome-page">
       <Container maxWidth="lg" className="card-shop-container">
         <Box className="card-shop-content">
           <Typography variant="h4" className="card-shop-title">
-            🛒 Card Shop
+            <FiShoppingCart className="page-title-icon" aria-hidden="true" /> Card Shop
           </Typography>
           <Typography variant="body1" className="card-shop-subtitle">
             {offer
@@ -84,7 +82,7 @@ export const CardShop: React.FC = () => {
               : 'Loading the pack…'}
           </Typography>
 
-          <PlayerStats player={user} variant="card" className="card-shop-stats" />
+          <PlayerWallet player={user} className="card-shop-wallet" />
 
           {error && (
             <Alert severity="error" className="card-shop-alert" onClose={() => setError(null)}>
@@ -113,7 +111,7 @@ export const CardShop: React.FC = () => {
                   isBuying ? <CircularProgress size={18} color="inherit" /> : <ShoppingBagIcon />
                 }
               >
-                {offer ? `Buy for ${offer.price.toLocaleString()} 🪙` : 'Loading…'}
+                {offer ? `Buy for ${offer.price.toLocaleString()}` : 'Loading…'}
               </Button>
 
               {offer && !canAfford && !isBuying && (
@@ -161,9 +159,10 @@ export const CardShop: React.FC = () => {
             variant="text"
             color="inherit"
             className="card-shop-back"
-            onClick={() => navigate('/lobby')}
+            onClick={() => navigate('/home')}
+            startIcon={<FiArrowLeft />}
           >
-            ← Back to Lobby
+            Back to Home
           </Button>
         </Box>
       </Container>

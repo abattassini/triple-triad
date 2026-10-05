@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import { FiArrowLeft } from 'react-icons/fi';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import RedeemIcon from '@mui/icons-material/Redeem';
 import StorefrontIcon from '@mui/icons-material/Storefront';
@@ -486,8 +487,14 @@ export const SelectHand: React.FC<SelectHandProps> = ({
           </Button>
         )}
         {onCancel && (
-          <Button variant="text" color="inherit" className="select-hand__cancel" onClick={onCancel}>
-            {'← Back to the Lobby'}
+          <Button
+            variant="text"
+            color="inherit"
+            className="select-hand__cancel"
+            onClick={onCancel}
+            startIcon={<FiArrowLeft />}
+          >
+            Back to Play
           </Button>
         )}
       </Box>

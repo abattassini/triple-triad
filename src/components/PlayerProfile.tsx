@@ -1,5 +1,6 @@
 import { Avatar, Box, LinearProgress, Typography } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
+import { FiCreditCard } from 'react-icons/fi';
 import { avatarUrlFor } from '../data/Avatar';
 import { LEVEL_STEP, levelForXp, xpIntoLevel } from '../data/Levels';
 import type { OpponentProfile } from '../services/api';
@@ -17,10 +18,10 @@ interface PlayerProfileProps {
  * It is deliberately inert. **No `BareModal`, no fetch, no navigation**: it is handed an `OpponentProfile` and draws
  * it, so it can be put anywhere. Today that is `PlayerProfileModal` on the match page, which is what owns the dialog
  * and knows where the data comes from (`plans/PLAN-020-opponent-profile/plan.md` §3.1). The card figure is a figure
- * and not a link, on purpose: a `🃏` pill on someone else's profile would open *my* collection, which is what
+ * and not a link, on purpose: a cards pill on someone else's profile would open *my* collection, which is what
  * `PlayerStats`' pills mean and what this panel must never mean.
  *
- * The level is drawn exactly the way the Lobby draws it — `Lv N · x/100 XP` over a bar — so the same number cannot
+ * The level is drawn exactly the way the stats panel draws it — `Lv N · x/100 XP` over a bar — so the same number cannot
  * look like two different things on two screens. That XP line is the one field here the request did not name
  * (plan §5 D5).
  */
@@ -56,7 +57,7 @@ export const PlayerProfile: React.FC<PlayerProfileProps> = ({ profile, className
 
       <Box className="player-profile__cards">
         <span className="player-profile__cards-icon" aria-hidden="true">
-          🃏
+          <FiCreditCard />
         </span>
         <span className="player-profile__cards-value">{profile.cardsOwned.toLocaleString()}</span>
         <span className="player-profile__cards-label">

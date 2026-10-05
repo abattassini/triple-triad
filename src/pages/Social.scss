@@ -1,0 +1,71 @@
+.social {
+  align-self: stretch;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.social-container {
+  width: 100%;
+  max-width: 720px;
+}
+
+.social-content {
+  .social-title {
+    color: #fff;
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .social-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+}
+
+/* The page's long latin block: enough text to scroll past the viewport. Left-aligned, unlike the centred heading and
+   panel above it, so it reads as an article rather than as page copy. Remove with `LOREM`. */
+.social-filler {
+  margin-top: 2rem;
+  text-align: left;
+
+  &__section {
+    margin-bottom: 2rem;
+  }
+
+  &__heading {
+    color: #4a9eff;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  &__paragraph {
+    color: rgba(255, 255, 255, 0.78);
+    margin-bottom: 1rem;
+  }
+}
+
+.social-coming-soon {
+  background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
+  border: 2px solid #3a3a5e;
+  border-radius: 12px !important;
+  padding: 2rem 1.5rem;
+  text-align: center;
+
+  &__title {
+    color: #ffcc00;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+
+  &__title-icon {
+    vertical-align: -0.12em;
+    margin-right: 0.4rem;
+    font-size: 0.85em;
+  }
+
+  &__caption {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}

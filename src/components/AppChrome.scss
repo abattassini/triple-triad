@@ -1,0 +1,293 @@
+/* The app chrome, shared by every signed-in page except the match board: a mobile header + footer and a desktop
+   left bar. It is `z-index: 1100`, deliberately below MUI's modal layer (1300), so an open `BareModal` darkens it and
+   swallows its clicks with no coordination. Everything here is presentation; the markup lives in `AppChrome.tsx`. */
+
+$chrome-bg: rgba(15, 15, 35, 0.92);
+$chrome-border: #3a3a5e;
+$chrome-accent: #4a9eff;
+
+.app-chrome__header,
+.app-chrome__footer,
+.app-chrome__bar {
+  position: fixed;
+  z-index: 1100;
+  background: $chrome-bg;
+  backdrop-filter: blur(10px);
+  color: #fff;
+}
+
+/* A three-column grid — the identity, the title, a balancing empty column — so the title stays centred on the screen
+   while the identity is confined to the room to its left and the name it carries ellipsises at that boundary instead
+   of spilling over the title. The title's column is `max-content`, so the title is never the thing that gives way; the
+   two `minmax(0, 1fr)` side columns are what shrink, and they may shrink below their own content — the point. */
+.app-chrome__header {
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid $chrome-border;
+}
+
+/* Scoped to `.app` so it outranks the legacy `.app h1` rule in App.css (specificity 0,1,1): that rule gives the
+   title a 2rem bottom margin (pulling it above the header's centre line) and, below 1200px, `display: none`. */
+.app .app-chrome__title {
+  display: block;
+  margin: 0;
+  color: #fff !important;
+  font-size: 1.65rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2;
+  /* Deliberately unbounded and unclipped: the grid hands the title all the room it needs, so a long login abbreviates
+     first. The app's name is the one thing in the chrome that must never be shortened. */
+  white-space: nowrap;
+}
+
+/* The avatar + name, used by both the header (left) and the bar (top). */
+.app-chrome__identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  transition: background 160ms ease;
+
+  &:hover {
+    background: rgba(74, 158, 255, 0.15);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $chrome-accent;
+    outline-offset: 2px;
+  }
+}
+
+/* The header's identity sits in the grid's first column and hugs its start, so the name it carries ellipsises at the
+   title's edge rather than crossing it. (The bar has no identity of its own — §14 dropped it.) */
+.app-chrome__header .app-chrome__identity {
+  justify-self: start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.app-chrome__avatar {
+  width: 32px !important;
+  height: 32px !important;
+  border: 2px solid $chrome-accent;
+  background: #16213e;
+  flex-shrink: 0;
+}
+
+.app-chrome__avatar-fallback {
+  font-size: 20px;
+}
+
+.app-chrome__name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  /* A flex item will not shrink below its own content without this, which is why the ellipsis never engaged. */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Mobile: the footer ───────────────────────────────────────────── */
+.app-chrome__footer {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-around;
+  border-top: 1px solid $chrome-border;
+}
+
+/* ── Desktop: the left bar ────────────────────────────────────────── */
+/* The header is present at every width, so the bar starts below it and the header owns the full top strip. */
+.app-chrome__bar {
+  top: 56px;
+  bottom: 0;
+  left: 0;
+  width: 76px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1rem 0.5rem;
+  border-right: 1px solid $chrome-border;
+}
+
+.app-chrome__nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* The bar's own furniture: roomier entries and larger icons than the phone footer. The identity lives in the header at
+   every width, so the bar carries the nav alone. */
+.app-chrome__bar .app-chrome__nav-item {
+  padding: 0.6rem 0.5rem;
+}
+
+.app-chrome__bar .app-chrome__nav-icon {
+  font-size: 1.75rem;
+}
+
+/* ── One menu entry: an icon, and a label that only a wide bar shows ─ */
+.app-chrome__nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.4rem 0.25rem;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+
+  &:hover {
+    background: rgba(74, 158, 255, 0.12);
+    color: #fff;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $chrome-accent;
+    outline-offset: 2px;
+  }
+
+  &--active {
+    color: $chrome-accent;
+  }
+}
+
+.app-chrome__nav-icon {
+  display: inline-flex;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* Icon only, on the phone footer and the narrow bar. */
+.app-chrome__nav-label {
+  display: none;
+}
+
+/* ── Desktop turns the footer into the left bar ───────────────────── */
+@media (min-width: 768px) {
+  .app-chrome__footer {
+    display: none;
+  }
+
+  .app-chrome__bar {
+    display: flex;
+  }
+}
+
+/* Labels appear once the bar is wide enough to show them beside the icons. */
+@media (min-width: 1025px) {
+  .app-chrome__bar {
+    width: 200px;
+    align-items: stretch;
+    padding: 1rem 0.75rem;
+  }
+
+  /* Stretch each entry to the bar's width so their icons share one left edge: the base `.app-chrome__nav` centres an
+     entry on its own content, which leaves the icons ragged once the labels differ in length. */
+  .app-chrome__nav {
+    align-items: stretch;
+  }
+
+  .app-chrome__nav-item {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 0.85rem;
+    padding: 0.7rem 0.75rem;
+  }
+
+  /* Twice the icon-only bar's icons (2 × 1.75rem). */
+  .app-chrome__bar .app-chrome__nav-icon {
+    font-size: 2rem;
+  }
+
+  .app-chrome__nav-label {
+    display: inline;
+    font-size: 1rem;
+  }
+}
+
+/* ── The page offset, so nothing hides behind the chrome ──────────── */
+/* Scoped to `.app` so it outranks a page's own root class (same source, higher specificity) and the chrome always
+   owns the offset — pages stay free to style everything else. The inset the bar needs is **mirrored on the right**, so
+   a page's content keeps the viewport's centre line instead of being pushed right by the bar's width. */
+.app .app-chrome-page {
+  box-sizing: border-box;
+  /* Fill the shell's content box rather than forcing a full `100vh` (the roots' own `min-height: 100vh` is overridden
+     here for the same reason): `.app` carries desktop padding in `App.css` (`3rem` from 1024px), so a 100vh root made
+     the shell 96px taller than the viewport and gave every chrome page a scrollbar even when its content fitted. */
+  flex: 1;
+  min-height: auto;
+  /* The header (56px) plus the room under it — 20px on a phone, 40px from 768px. From 1024px `App.css` puts `3rem`
+     above the shell, which covers 48px of that room, so this drops to 48px (the same 96px total as the larger sizes). */
+  padding-top: 76px;
+  padding-bottom: 80px; /* the footer */
+
+  @media (min-width: 768px) {
+    padding-top: 96px; /* the header (56px) + 40px */
+    padding-bottom: 0;
+    padding-left: 76px; /* the icon bar */
+    padding-right: 76px; /* mirrored, so the content keeps the viewport's centre line */
+  }
+
+  @media (min-width: 1024px) {
+    padding-top: 48px; /* 96px in total with the shell's `3rem` above */
+  }
+
+  @media (min-width: 1025px) {
+    padding-left: 200px; /* the labelled bar */
+    padding-right: 200px; /* mirrored, so the content keeps the viewport's centre line */
+  }
+}
+
+/* A page heading's icon, where an emoji used to sit (the PLAN-021 review removed the emojis). */
+.page-title-icon {
+  vertical-align: -0.12em;
+  margin-right: 0.4rem;
+  font-size: 0.85em;
+  color: $chrome-accent;
+}
+
+/* ── The profile modal ────────────────────────────────────────────── */
+.app-chrome__profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: min(360px, calc(100vw - 64px));
+  margin: 0 auto;
+}
+
+.app-chrome__profile .player-stats {
+  width: 100%;
+}
+
+.app-chrome__signout {
+  color: #ff6b6b !important;
+  margin-top: 0.5rem;
+}

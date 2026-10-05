@@ -46,7 +46,7 @@
     text-align: center;
   }
 
-  // The card count reads like the Lobby's 🃏 pill, minus the invitation: same colours and shape, no cursor, no hover,
+  // The card count reads like the PlayerStats cards pill, minus the invitation: same colours and shape, no cursor, no hover,
   // and a plain span — there is nothing to open, so nothing pretends to be a button.
   &__cards {
     display: inline-flex;
@@ -76,7 +76,7 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
-  // Wins / losses / ties across one row, using the Lobby's tile values. At a 320px viewport the panel is 216px
+  // Wins / losses / ties across one row, using the stats panel's tile values. At a 320px viewport the panel is 216px
   // inside its padding, so the tracks stay `1fr` and each is ~64px: the labels are the only thing that can wrap.
   &__record {
     display: grid;

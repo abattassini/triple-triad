@@ -1,0 +1,26 @@
+/* The chrome's own offset is `.app-chrome-page` (AppChrome.scss), applied to the root along with this file. Like Play's
+   `.play-container`, the root deliberately does **not** claim the full width: `.app` centres it and it shrink-wraps
+   its content, so Home and Play lay their action tiles out the same way (PLAN-021 §16). The tiles themselves are the
+   shared `ActionTile.scss`. */
+.home {
+  min-height: 100vh;
+}
+
+.home-container {
+  max-width: 1200px;
+}
+
+.home-content {
+  .home-title {
+    color: #fff;
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .home-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+}

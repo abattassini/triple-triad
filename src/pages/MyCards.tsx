@@ -12,11 +12,9 @@ import {
   Typography,
 } from '@mui/material';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import { FiArrowLeft, FiCreditCard } from 'react-icons/fi';
 import { CardTile } from '../components/CardTile';
-import { HamburgerMenu } from '../components/HamburgerMenu';
-import { PlayerStats } from '../components/PlayerStats';
 import { apiService, type CollectionSummary, type OwnedCard } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
 import './MyCards.scss';
 
 /**
@@ -27,7 +25,6 @@ import './MyCards.scss';
  * are not offered, and the cards inside a level are listed by name.
  */
 export const MyCards: React.FC = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [summary, setSummary] = useState<CollectionSummary | null>(null);
@@ -109,13 +106,11 @@ export const MyCards: React.FC = () => {
   };
 
   return (
-    <Box className="my-cards">
-      <HamburgerMenu />
-
+    <Box className="my-cards app-chrome-page">
       <Container maxWidth={false} className="my-cards-container">
         <Box className="my-cards-content">
           <Typography variant="h4" className="my-cards-title">
-            🃏 My Cards
+            <FiCreditCard className="page-title-icon" aria-hidden="true" /> My Cards
           </Typography>
           <Typography variant="body1" className="my-cards-subtitle">
             {isLoadingSummary
@@ -124,8 +119,6 @@ export const MyCards: React.FC = () => {
                 ? `${summary?.distinctCards ?? 0} distinct cards · ${summary?.copiesOwned ?? 0} copies owned`
                 : 'Your collection is empty'}
           </Typography>
-
-          <PlayerStats player={user} variant="card" className="my-cards-stats" />
 
           {error && (
             <Alert severity="error" className="my-cards-alert" onClose={() => setError(null)}>
@@ -217,9 +210,10 @@ export const MyCards: React.FC = () => {
             variant="text"
             color="inherit"
             className="my-cards-back"
-            onClick={() => navigate('/lobby')}
+            onClick={() => navigate('/home')}
+            startIcon={<FiArrowLeft />}
           >
-            ← Back to Lobby
+            Back to Home
           </Button>
         </Box>
       </Container>

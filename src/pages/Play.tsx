@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
-import { Alert, Box, Typography, CircularProgress, Container, Button, Paper } from '@mui/material';
+import { Alert, Box, Typography, CircularProgress, Container, Button } from '@mui/material';
+import { FiCpu, FiPlayCircle } from 'react-icons/fi';
+import { ActionTile } from '../components/ActionTile';
 import { BareModal, BareModalLoading } from '../components/BareModal';
-import { HamburgerMenu } from '../components/HamburgerMenu';
-import { PlayerStats } from '../components/PlayerStats';
 import { SelectHandModal } from '../components/SelectHandModal';
 import { apiService, ALL_MATCH_RULES, CPU_OPPONENT_ID, type MatchRule } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
-import './Lobby.scss';
+import './Play.scss';
 
 /** Where the Quick Match flow is: idle → the rules modal → searching → picking → waiting → the board. */
 type MatchPhase = 'idle' | 'searching' | 'picking' | 'waiting';
@@ -19,7 +19,7 @@ type OpponentKind = 'human' | 'cpu';
 /** How often the waiting panel checks the match while the opponent picks — the MatchReady push is the fast path. */
 const READINESS_POLL_MS = 2000;
 
-export const Lobby: React.FC = () => {
+export const Play: React.FC = () => {
   const { user, refreshUser } = useAuth();
   const navigate = useNavigate();
   const login = user?.login;
@@ -51,7 +51,7 @@ export const Lobby: React.FC = () => {
     }
   }, [login, navigate]);
 
-  // Pick up the latest coins/XP/W-L-T whenever the lobby is entered after a match.
+  // Pick up the latest coins/XP/W-L-T whenever Play is entered after a match.
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
@@ -323,143 +323,71 @@ export const Lobby: React.FC = () => {
   }
 
   return (
-    <Box className="lobby-container">
-      <HamburgerMenu />
-      <Container className="lobby-content">
-        <PlayerStats player={user} variant="card" className="lobby-stats-mobile" />
-
-        <Typography variant="body1" className="lobby-subtitle">
-          {isConnected ? '🟢 Connected' : '🔴 Connecting...'}
+    <Box className="play-container app-chrome-page">
+      <Container className="play-content">
+        <Typography variant="h4" className="play-title">
+          <FiPlayCircle className="page-title-icon" aria-hidden="true" /> Play
+        </Typography>
+        <Typography variant="body1" className="play-subtitle">
+          Find an opponent and start a match
         </Typography>
 
         {statusMessage && (
-          <Alert severity="info" className="lobby-status" onClose={() => setStatusMessage(null)}>
+          <Alert severity="info" className="play-status" onClose={() => setStatusMessage(null)}>
             {statusMessage}
           </Alert>
         )}
 
-        <Box className="lobby-body">
-          <PlayerStats player={user} variant="sidebar" className="lobby-stats-desktop" />
-
-          <Box className="lobby-actions">
-            <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>
-              <Typography variant="h5" sx={{ color: '#4a9eff', mb: 1 }}>
-                🎮 Quick Match
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#ccc', mb: 2 }}>
-                Join a match with a random opponent
-              </Typography>
-
-              {phase === 'searching' ? (
-                <Box sx={{ textAlign: 'center', py: 2 }}>
-                  <CircularProgress sx={{ color: '#4a9eff' }} />
-                  <Typography variant="body1" sx={{ mt: 2, color: '#fff' }}>
-                    Searching for opponent...
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#4a9eff', mt: 1 }}>
-                    {searchingRules.length > 0
-                      ? `Rules: ${searchingRules.map(rule => rule.toUpperCase()).join(' · ')}`
-                      : 'No special rules'}
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    color="error"
-                    onClick={handleCancelSearch}
-                    sx={{ mt: 2 }}
-                  >
-                    Cancel
-                  </Button>
-                </Box>
-              ) : (
+        <Box className="action-tiles">
+          {/* The button is the tile's own (the component renders it); while searching, the body is that whole state
+              instead. The picker and the waiting panel live in their own modal, which blocks the page behind them. */}
+          <ActionTile
+            icon={<FiPlayCircle />}
+            title="Quick Match"
+            caption="Join a match with a random opponent"
+            actionLabel="Quick Match"
+            onAction={() => {
+              setOpponentKind('human');
+              setIsChoosingRules(true);
+            }}
+            actionDisabled={!isConnected || phase !== 'idle' || isStarting}
+          >
+            {phase === 'searching' ? (
+              <Box className="play-searching">
+                <CircularProgress sx={{ color: '#4a9eff' }} />
+                <Typography variant="body1" className="play-searching__title">
+                  Searching for opponent...
+                </Typography>
+                <Typography variant="body2" className="play-searching__rules">
+                  {searchingRules.length > 0
+                    ? `Rules: ${searchingRules.map(rule => rule.toUpperCase()).join(' · ')}`
+                    : 'No special rules'}
+                </Typography>
                 <Button
-                  variant="contained"
-                  fullWidth
-                  size="large"
-                  onClick={() => {
-                    setOpponentKind('human');
-                    setIsChoosingRules(true);
-                  }}
-                  // The picker and the waiting panel live in their own modal, which blocks the page behind them.
-                  disabled={!isConnected || phase !== 'idle' || isStarting}
-                  sx={{
-                    backgroundColor: '#4a9eff',
-                    '&:hover': { backgroundColor: '#3a8eef' },
-                  }}
+                  variant="outlined"
+                  color="error"
+                  className="play-searching__cancel"
+                  onClick={handleCancelSearch}
                 >
-                  Quick Match
+                  Cancel
                 </Button>
-              )}
-            </Paper>
+              </Box>
+            ) : undefined}
+          </ActionTile>
 
-            {/* The CPU tile: same rules choice, nobody to search for. It is the second option because it is Quick
+          {/* The CPU tile: same rules choice, nobody to search for. It is the second option because it is Quick
                 Match's fallback in spirit — a match right now, just not against a person. */}
-            <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>
-              <Typography variant="h5" sx={{ color: '#4a9eff', mb: 1 }}>
-                🤖 Quick Match against CPU
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#ccc', mb: 2 }}>
-                Play a full match against the computer right away
-              </Typography>
-              <Button
-                variant="contained"
-                fullWidth
-                size="large"
-                onClick={() => {
-                  setOpponentKind('cpu');
-                  setIsChoosingRules(true);
-                }}
-                disabled={!isConnected || phase !== 'idle' || isStarting}
-                sx={{
-                  backgroundColor: '#4a9eff',
-                  '&:hover': { backgroundColor: '#3a8eef' },
-                }}
-              >
-                Quick Match against CPU
-              </Button>
-            </Paper>
-
-            <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>
-              <Typography variant="h5" sx={{ color: '#4a9eff', mb: 1 }}>
-                🃏 My Cards
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#ccc', mb: 2 }}>
-                See the cards you own, grouped by level
-              </Typography>
-              <Button
-                variant="contained"
-                fullWidth
-                size="large"
-                onClick={() => navigate('/cards')}
-                sx={{
-                  backgroundColor: '#4a9eff',
-                  '&:hover': { backgroundColor: '#3a8eef' },
-                }}
-              >
-                My Cards
-              </Button>
-            </Paper>
-
-            <Paper elevation={3} sx={{ p: 3, backgroundColor: '#1a1a2e', borderRadius: 2 }}>
-              <Typography variant="h5" sx={{ color: '#4a9eff', mb: 1 }}>
-                🛒 Card Shop
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#ccc', mb: 2 }}>
-                Buy a 5-card pack for 1,500 coins
-              </Typography>
-              <Button
-                variant="contained"
-                fullWidth
-                size="large"
-                onClick={() => navigate('/shop')}
-                sx={{
-                  backgroundColor: '#4a9eff',
-                  '&:hover': { backgroundColor: '#3a8eef' },
-                }}
-              >
-                Open Shop
-              </Button>
-            </Paper>
-          </Box>
+          <ActionTile
+            icon={<FiCpu />}
+            title="Quick Match against CPU"
+            caption="Play a full match against the computer right away"
+            actionLabel="Quick Match against CPU"
+            onAction={() => {
+              setOpponentKind('cpu');
+              setIsChoosingRules(true);
+            }}
+            actionDisabled={!isConnected || phase !== 'idle' || isStarting}
+          />
         </Box>
       </Container>
 
@@ -467,31 +395,36 @@ export const Lobby: React.FC = () => {
         open={isChoosingRules}
         onClose={() => setIsChoosingRules(false)}
         // Full width up to the dialog's cap: without it MUI shrink-wraps the paper to its content, which
-        // left the modal a narrow column in the middle of a desktop screen. Lobby.scss keeps the content a
+        // left the modal a narrow column in the middle of a desktop screen. Play.scss keeps the content a
         // modest centred column (the two options stay stacked), so `sm` is all the room it needs.
         fullWidth
         maxWidth="sm"
-        className="lobby-rules-modal"
+        className="play-rules-modal"
         ariaLabel="Quick Match options"
       >
-        <Typography variant="h5" className="lobby-rules-modal__title">
-          {opponentKind === 'cpu' ? '🤖 Quick Match against CPU' : '🎮 Quick Match'}
+        <Typography variant="h5" className="play-rules-modal__title">
+          {opponentKind === 'cpu' ? (
+            <FiCpu className="page-title-icon" aria-hidden="true" />
+          ) : (
+            <FiPlayCircle className="page-title-icon" aria-hidden="true" />
+          )}
+          {opponentKind === 'cpu' ? 'Quick Match against CPU' : 'Quick Match'}
         </Typography>
-        <Typography variant="body2" className="lobby-rules-modal__hint">
+        <Typography variant="body2" className="play-rules-modal__hint">
           Pick how you want to play
         </Typography>
 
-        <Box className="lobby-rules-modal__options">
+        <Box className="play-rules-modal__options">
           <Button
             autoFocus
             variant="outlined"
             size="large"
             fullWidth
-            className="lobby-rules-modal__option"
+            className="play-rules-modal__option"
             onClick={() => startChosenMatch([])}
           >
-            <span className="lobby-rules-modal__option-label">Basic Match</span>
-            <span className="lobby-rules-modal__option-caption">No special rules</span>
+            <span className="play-rules-modal__option-label">Basic Match</span>
+            <span className="play-rules-modal__option-caption">No special rules</span>
           </Button>
 
           {/* The caption is rendered from the constant, so a fifth rule needs no change here. */}
@@ -499,11 +432,11 @@ export const Lobby: React.FC = () => {
             variant="contained"
             size="large"
             fullWidth
-            className="lobby-rules-modal__option lobby-rules-modal__option--rules"
+            className="play-rules-modal__option play-rules-modal__option--rules"
             onClick={() => startChosenMatch(ALL_MATCH_RULES)}
           >
-            <span className="lobby-rules-modal__option-label">Match with Rules</span>
-            <span className="lobby-rules-modal__option-caption">
+            <span className="play-rules-modal__option-label">Match with Rules</span>
+            <span className="play-rules-modal__option-caption">
               {ALL_MATCH_RULES.map(rule => rule.toUpperCase()).join(' · ')}
             </span>
           </Button>
@@ -512,7 +445,7 @@ export const Lobby: React.FC = () => {
         <Button
           variant="text"
           color="inherit"
-          className="lobby-rules-modal__cancel"
+          className="play-rules-modal__cancel"
           onClick={() => setIsChoosingRules(false)}
         >
           Cancel
@@ -520,7 +453,7 @@ export const Lobby: React.FC = () => {
       </BareModal>
 
       {/* From the option click until the picker is on screen: the choice has been made and the create/join (plus the
-          SignalR room) is in flight. The same shell shows a spinner instead of dropping the player onto an idle Lobby,
+          SignalR room) is in flight. The same shell shows a spinner instead of dropping the player onto an idle Play,
           and it closes on its own — `isStarting` is cleared in the same batch that moves the phase on, so the
           searching tile (or the picker) is what the player sees next. It cannot be dismissed, because the call behind
           it decides where the flow goes next. */}

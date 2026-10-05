@@ -25,6 +25,20 @@ import { Hand } from './Hand';
 import { PlayerProfileModal } from './PlayerProfileModal';
 import { Board } from './Board';
 import {
+  FiAlertTriangle,
+  FiAward,
+  FiClock,
+  FiCrosshair,
+  FiDollarSign,
+  FiFlag,
+  FiFrown,
+  FiMeh,
+  FiRefreshCw,
+  FiStar,
+  FiTrendingUp,
+  FiZap,
+} from 'react-icons/fi';
+import {
   apiService,
   CPU_OPPONENT_ID,
   HAND_SIZE,
@@ -202,7 +216,7 @@ export const Match: React.FC = () => {
    * and the `CardPlayed` push (everything else), because the two carry the same data — see `LegalMove` and
    * `MatchPushes.CardPlayed` — so a card can never land two different ways depending on which one arrived first.
    *
-   * The rule flash is set in this same call as the board, which is the point: the ⚡ effect and the cards it is about
+   * The rule flash is set in this same call as the board, which is the point: the flash effect and the cards it is about
    * are committed in one render, instead of the flash announcing a capture the player cannot see yet.
    */
   const applyMoveRender = useCallback(
@@ -523,7 +537,7 @@ export const Match: React.FC = () => {
         setIsMyTurn(data.currentPlayer === userId);
 
         // Flash the rule that fired (e.g. SAME) so both players notice the extra captures. It is set **after** the
-        // board above, in the same handler, so the two are committed in one render: the ⚡ is about cards the player
+        // board above, in the same handler, so the two are committed in one render: the flash is about cards the player
         // can see, never a capture that has not landed yet.
         if (!renderedLocally && data.triggeredRules && data.triggeredRules.length > 0) {
           setLastTriggeredRule(ruleLabel(data.triggeredRules[0]));
@@ -817,7 +831,10 @@ export const Match: React.FC = () => {
         sx={{ gap: 2, textAlign: 'center', px: 2 }}
       >
         <Typography variant="h5" sx={{ color: '#ffcc00', fontWeight: 'bold' }}>
-          ⚠️ Match abandoned
+          <span className="match-icon" aria-hidden="true">
+            <FiAlertTriangle />
+          </span>
+          Match abandoned
         </Typography>
         <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
           {abandonedReason
@@ -825,11 +842,11 @@ export const Match: React.FC = () => {
             : 'This match could not be played — it expired before both players were ready.'}
         </Typography>
         <Button
-          onClick={() => navigate('/lobby')}
+          onClick={() => navigate('/home')}
           variant="contained"
           sx={{ bgcolor: '#4a9eff', '&:hover': { bgcolor: '#0078ff' }, px: 4, py: 1.5 }}
         >
-          Back to Lobby
+          Back to Home
         </Button>
       </Box>
     );
@@ -852,8 +869,8 @@ export const Match: React.FC = () => {
       : { coins: lastRewards.player2Coins, experience: lastRewards.player2Experience }
     : null;
   // Handle game over dialog actions
-  const handleReturnToLobby = () => {
-    navigate('/lobby');
+  const handleReturnHome = () => {
+    navigate('/home');
   };
 
   return (
@@ -871,19 +888,25 @@ export const Match: React.FC = () => {
             color: match.status === 'completed' ? '#ffcc00' : isMyTurn ? '#4eff4a' : '#ff4a4a',
           }}
         >
+          <span className="match-icon" aria-hidden="true">
+            {match.status === 'completed' ? <FiFlag /> : isMyTurn ? <FiCrosshair /> : <FiClock />}
+          </span>
           {match.status === 'completed'
-            ? '🏁 Match Completed'
+            ? 'Match Completed'
             : isMyTurn
-              ? '🎯 Your Turn'
-              : "⏳ Opponent's Turn"}
+              ? 'Your Turn'
+              : "Opponent's Turn"}
         </Typography>
         {connectionState !== 'connected' && (
           <Typography variant="body2" sx={{ color: '#ff9800' }}>
+            <span className="match-icon" aria-hidden="true">
+              {connectionState === 'reconnected' ? <FiRefreshCw /> : <FiAlertTriangle />}
+            </span>
             {connectionState === 'reconnecting'
-              ? '⚠️ Reconnecting to the server…'
+              ? 'Reconnecting to the server…'
               : connectionState === 'reconnected'
-                ? '🔁 Reconnected — catching up…'
-                : '⚠️ Disconnected from server'}
+                ? 'Reconnected — catching up…'
+                : 'Disconnected from server'}
           </Typography>
         )}
         {match.rules && match.rules.length > 0 && (
@@ -935,7 +958,10 @@ export const Match: React.FC = () => {
             Match.scss keeps drag & drop on the board working while it is on screen. */}
         {lastTriggeredRule && (
           <div className="match-rule-flash">
-            <span className="match-rule-flash-text">⚡ {lastTriggeredRule}!</span>
+            <span className="match-rule-flash-text">
+              <FiZap className="match-icon" aria-hidden="true" />
+              {lastTriggeredRule}!
+            </span>
           </div>
         )}
       </div>
@@ -975,9 +1001,21 @@ export const Match: React.FC = () => {
             textShadow: '0 4px 8px rgba(0, 0, 0, 0.5)',
           }}
         >
-          {gameResult === 'won' && '🎉 Victory!'}
-          {gameResult === 'lost' && '💔 Defeat'}
-          {gameResult === 'draw' && '🤝 Draw!'}
+          {gameResult === 'won' && (
+            <>
+              <FiAward className="match-icon" aria-hidden="true" /> Victory!
+            </>
+          )}
+          {gameResult === 'lost' && (
+            <>
+              <FiFrown className="match-icon" aria-hidden="true" /> Defeat
+            </>
+          )}
+          {gameResult === 'draw' && (
+            <>
+              <FiMeh className="match-icon" aria-hidden="true" /> Draw!
+            </>
+          )}
         </DialogTitle>
         <DialogContent sx={{ textAlign: 'center', color: '#fff' }}>
           {/* A match settled by a timeout has no score to show: nobody played a card, so the line would read 5-5 and
@@ -1019,12 +1057,14 @@ export const Match: React.FC = () => {
           )}
           {gameResult === 'won' && !completionReason && (
             <Typography variant="body1" sx={{ color: '#4eff4a', mb: 1 }}>
-              Excellent work! You dominated the battlefield! 🏆
+              <FiAward className="match-icon" aria-hidden="true" /> Excellent work! You dominated
+              the battlefield!
             </Typography>
           )}
           {gameResult === 'lost' && !completionReason && (
             <Typography variant="body1" sx={{ color: '#ff6b6b', mb: 1 }}>
-              Better luck next time! Keep practicing! 💪
+              <FiTrendingUp className="match-icon" aria-hidden="true" /> Better luck next time! Keep
+              practicing!
             </Typography>
           )}
           {gameResult === 'draw' && !completionReason && (
@@ -1034,7 +1074,8 @@ export const Match: React.FC = () => {
           )}
           {completionReason === 'timeout' && (
             <Typography variant="body1" sx={{ color: '#ffcc00', mb: 1 }}>
-              ⏱️ {gameResult === 'won' ? 'Your opponent left — you win.' : 'You timed out.'}
+              <FiClock className="match-icon" aria-hidden="true" />{' '}
+              {gameResult === 'won' ? 'Your opponent left — you win.' : 'You timed out.'}
             </Typography>
           )}
           {myReward && (myReward.coins > 0 || myReward.experience > 0) && (
@@ -1052,17 +1093,17 @@ export const Match: React.FC = () => {
               }}
             >
               <Typography variant="h6" sx={{ color: '#ffcc00', fontWeight: 'bold' }}>
-                🪙 +{myReward.coins}
+                <FiDollarSign className="match-icon" aria-hidden="true" /> +{myReward.coins}
               </Typography>
               <Typography variant="h6" sx={{ color: '#4a9eff', fontWeight: 'bold' }}>
-                ⭐ +{myReward.experience} XP
+                <FiStar className="match-icon" aria-hidden="true" /> +{myReward.experience} XP
               </Typography>
             </Box>
           )}
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
           <Button
-            onClick={handleReturnToLobby}
+            onClick={handleReturnHome}
             variant="contained"
             sx={{
               bgcolor: '#4a9eff',
@@ -1071,7 +1112,7 @@ export const Match: React.FC = () => {
               py: 1.5,
             }}
           >
-            Return to Lobby
+            Return to Home
           </Button>
         </DialogActions>
       </Dialog>

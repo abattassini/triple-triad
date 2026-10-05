@@ -15,6 +15,7 @@ import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import LockIcon from '@mui/icons-material/Lock';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import { FiArrowLeft } from 'react-icons/fi';
 import { apiService } from '../services/api';
 import './ResetPassword.scss';
 
@@ -261,8 +262,9 @@ export const ResetPassword: React.FC = () => {
           color="inherit"
           className="reset-password-back"
           onClick={() => navigate('/sign-in')}
+          startIcon={<FiArrowLeft />}
         >
-          {'\u2190'} Back to sign in
+          Back to sign in
         </Button>
       </Paper>
     </Container>

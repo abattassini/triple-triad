@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, Container, Typography } from '@mui/material';
+import { FiArrowLeft, FiAward } from 'react-icons/fi';
 import { PackOpener } from '../components/PackOpener';
 import { usePackInventory } from '../hooks/usePackInventory';
 import './Welcome.scss';
@@ -13,7 +14,7 @@ import './Welcome.scss';
  *
  * It deliberately renders no `PlayerStats` and mounts no hamburger menu (the drawer header carries the compact
  * stats, so adding it here would put stats on this page too). Nothing links to the route either: it is the
- * one-shot onboarding step of a brand-new account, and the packs stay reachable through the 🎁 pill afterwards.
+ * one-shot onboarding step of a brand-new account, and the packs stay reachable through the packs pill afterwards.
  */
 export const Welcome: React.FC = () => {
   const navigate = useNavigate();
@@ -31,11 +32,11 @@ export const Welcome: React.FC = () => {
   } = usePackInventory();
 
   return (
-    <Box className="welcome">
+    <Box className="welcome app-chrome-page">
       <Container maxWidth="lg" className="welcome-container">
         <Box className="welcome-content">
           <Typography variant="h3" className="welcome-title">
-            🎉 Welcome to Triple Triad
+            <FiAward className="page-title-icon" aria-hidden="true" /> Welcome to Triple Triad
           </Typography>
           <Typography variant="h5" className="welcome-lead">
             You received 6 packs of cards to start the game
@@ -54,7 +55,7 @@ export const Welcome: React.FC = () => {
             isLoading={isLoading}
             isOpening={isOpening}
             error={error}
-            emptyState="lobby"
+            emptyState="home"
             onOpen={openPack}
             onDismissReveal={dismissReveal}
             onClearError={clearError}
@@ -64,9 +65,10 @@ export const Welcome: React.FC = () => {
             variant="text"
             color="inherit"
             className="welcome-back"
-            onClick={() => navigate('/lobby')}
+            onClick={() => navigate('/home')}
+            startIcon={<FiArrowLeft />}
           >
-            {'← Continue to the Lobby'}
+            Continue to Home
           </Button>
         </Box>
       </Container>

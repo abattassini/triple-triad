@@ -286,3 +286,19 @@
     margin-top: 0;
   }
 }
+
+/* The wallet on its own: the coins pill and the two goods pills in one centered row. The Card Shop renders this
+   instead of the full card, so nothing else comes with it. */
+.player-wallet {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  /* The goods row carries a top margin so it sits under the coins in the stacked card variants; in the wallet the
+     coins and the goods share the one row. */
+  .player-stats__goods-row {
+    margin-top: 0;
+  }
+}

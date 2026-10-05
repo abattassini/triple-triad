@@ -43,7 +43,7 @@ export const HamburgerMenu: React.FC = () => {
   };
 
   const menuItems = [
-    { text: 'Lobby', icon: <HomeIcon />, path: '/lobby' },
+    { text: 'Home', icon: <HomeIcon />, path: '/home' },
     { text: 'My Cards', icon: <StyleIcon />, path: '/cards' },
     { text: 'My Packs', icon: <RedeemIcon />, path: '/packs' },
     { text: 'Card Shop', icon: <StorefrontIcon />, path: '/shop' },

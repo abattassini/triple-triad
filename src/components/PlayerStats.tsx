@@ -1,5 +1,6 @@
 import { Avatar, Box, LinearProgress, Paper, Typography } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
+import { FiCreditCard, FiDollarSign, FiGift } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import type { Player } from '../services/api';
 import './PlayerStats.scss';
@@ -34,7 +35,7 @@ const AvatarBadge: React.FC<{ player: Player; size: number }> = ({ player, size 
 const CoinsPill: React.FC<{ coins: number }> = ({ coins }) => (
   <Box className="player-stats__coins">
     <span className="player-stats__coin-icon" aria-hidden="true">
-      🪙
+      <FiDollarSign />
     </span>
     <span className="player-stats__coin-value">{coins.toLocaleString()}</span>
   </Box>
@@ -45,7 +46,7 @@ const CoinsPill: React.FC<{ coins: number }> = ({ coins }) => (
  * screen that already shows the profile is also an entry point to those pages. Styled as a button (hover lift,
  * pointer, focus ring) because that is exactly what it is.
  */
-const GoodsPill: React.FC<{ icon: string; value: number; label: string; to: string }> = ({
+const GoodsPill: React.FC<{ icon: React.ReactNode; value: number; label: string; to: string }> = ({
   icon,
   value,
   label,
@@ -76,8 +77,8 @@ const GoodsPill: React.FC<{ icon: string; value: number; label: string; to: stri
  */
 const GoodsRow: React.FC<{ player: Player }> = ({ player }) => (
   <Box className="player-stats__goods-row">
-    <GoodsPill icon="🃏" value={player.cardsOwned ?? 0} label="cards" to="/cards" />
-    <GoodsPill icon="🎁" value={player.packsOwned ?? 0} label="packs" to="/packs" />
+    <GoodsPill icon={<FiCreditCard />} value={player.cardsOwned ?? 0} label="cards" to="/cards" />
+    <GoodsPill icon={<FiGift />} value={player.packsOwned ?? 0} label="packs" to="/packs" />
   </Box>
 );
 
@@ -205,5 +206,26 @@ export const PlayerStats: React.FC<PlayerStatsProps> = ({
       <GoodsRow player={player} />
       <StatTiles player={player} />
     </Paper>
+  );
+};
+
+/**
+ * The wallet on its own: the coin balance and the two goods pills (cards → My Cards, packs → My Packs), without the
+ * avatar, name, XP and W-L-T the full card carries. It is what the **Card Shop** shows in place of `PlayerStats`:
+ * that page is about spending coins and growing both collections, so it needs those three figures and nothing else.
+ */
+export const PlayerWallet: React.FC<{ player: Player | null; className?: string }> = ({
+  player,
+  className = '',
+}) => {
+  if (!player) {
+    return null;
+  }
+
+  return (
+    <Box className={`player-wallet ${className}`.trim()}>
+      <CoinsPill coins={player.coins} />
+      <GoodsRow player={player} />
+    </Box>
   );
 };

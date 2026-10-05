@@ -9,7 +9,7 @@ import type { PackCard, PackStack } from '../services/api';
 import './PackOpener.scss';
 
 // What a page says once there is nothing left to open: My Packs points at the shop that sells packs, the Welcome
-// page sends the player on to the Lobby.
+// page sends the player on to Home.
 const EMPTY_STATES = {
   shop: {
     title: "You don't have any packs yet",
@@ -18,11 +18,11 @@ const EMPTY_STATES = {
     to: '/shop',
     icon: <StorefrontIcon />,
   },
-  lobby: {
+  home: {
     title: "You've opened every pack",
     caption: 'Your cards are waiting in your collection — open My Cards to see what you drew.',
-    action: 'Continue to the Lobby',
-    to: '/lobby',
+    action: 'Continue to Home',
+    to: '/home',
     icon: <HomeIcon />,
   },
 } as const;

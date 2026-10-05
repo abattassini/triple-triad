@@ -1,0 +1,72 @@
+/* The shared section-action panel: Home's View Cards / Buy Packs tiles and Play's Quick Match / CPU tiles both use
+   `.action-tiles` (the stack) + `.action-tile` (the panel), so the two screens cannot drift apart (PLAN-021 review).
+
+   The stack is **always one tile per row**, and on a phone it is capped at 450px; the wider screens just centre the
+   same column rather than putting the tiles side by side. */
+.action-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+
+  @media (max-width: 600px) {
+    max-width: 450px;
+    gap: 1rem;
+  }
+}
+
+.action-tile {
+  width: 100%;
+  padding: 1.5rem;
+  text-align: center;
+  background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
+  border: 2px solid #3a3a5e;
+  border-radius: 12px !important;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-bottom: 0.5rem;
+  }
+
+  &__icon {
+    display: inline-flex;
+    color: #4a9eff;
+    font-size: 1.6rem;
+    line-height: 1;
+  }
+
+  &__title {
+    color: #4a9eff;
+    font-weight: 700;
+  }
+
+  &__caption {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.75rem !important;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* The tile's primary action keeps the colour Home's tiles already had. */
+  &__body > .MuiButton-contained {
+    background-color: #4a9eff;
+
+    &:hover {
+      background-color: #3a8eef;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .action-tile {
+    padding: 1.25rem;
+  }
+}

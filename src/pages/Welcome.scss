@@ -1,10 +1,11 @@
 /* `App.css` makes `.app` a column flex box with `align-items: center`, so the page claims the full width itself.
-   No hamburger menu here, hence the roomier top padding. */
+   The chrome supplies the vertical offset (`.app-chrome-page`), so only the side gutters live here. */
 .welcome {
   align-self: stretch;
   width: 100%;
   min-height: 100vh;
-  padding: 96px 1rem 3rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
 }
 
 .welcome-container {

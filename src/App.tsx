@@ -1,8 +1,11 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { Box, CircularProgress } from '@mui/material';
 import './App.css';
+import { AppChrome } from './components/AppChrome';
 import { Landing } from './pages/Landing';
-import { Lobby } from './pages/Lobby';
+import { Home } from './pages/Home';
+import { Play } from './pages/Play';
+import { Social } from './pages/Social';
 import { CardShop } from './pages/CardShop';
 import { MyCards } from './pages/MyCards';
 import { MyPacks } from './pages/MyPacks';
@@ -39,11 +42,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 // Keeps signed-in users out of the public entry pages (Landing / Sign In / Create Account). `redirectTo` is where
-// an authenticated visitor is sent: the Lobby for the entry pages, but the Welcome page for account creation — so
-// the redirect that follows a successful registration can never race ahead of it and land the player in the Lobby.
+// an authenticated visitor is sent: Home for the entry pages, but the Welcome page for account creation — so the
+// redirect that follows a successful registration can never race ahead of it and land the player in Home.
 function PublicOnlyRoute({
   children,
-  redirectTo = '/lobby',
+  redirectTo = '/home',
 }: {
   children: React.ReactNode;
   redirectTo?: string;
@@ -59,6 +62,17 @@ function PublicOnlyRoute({
   }
 
   return <>{children}</>;
+}
+
+// The signed-in pages that carry the chrome (`AppChrome`): one mount for all of them, rather than each page mounting
+// it. The match board is deliberately not one of them.
+function AppLayout() {
+  return (
+    <ProtectedRoute>
+      <AppChrome />
+      <Outlet />
+    </ProtectedRoute>
+  );
 }
 
 function App() {
@@ -91,7 +105,7 @@ function App() {
         />
         {/* Password recovery. Both are public-only, and both sit above the catch-all below — a reset link arriving
             from an email lands on /reset-password with ?token=…, which must reach this route rather than be
-            redirected to the Lobby. The GitHub Pages 404 shim (public/404.html + index.html) is what keeps that
+            redirected to Home. The GitHub Pages 404 shim (public/404.html + index.html) is what keeps that
             deep link working on a static host. */}
         <Route
           path="/forgot-password"
@@ -109,14 +123,18 @@ function App() {
             </PublicOnlyRoute>
           }
         />
-        <Route
-          path="/lobby"
-          element={
-            <ProtectedRoute>
-              <Lobby />
-            </ProtectedRoute>
-          }
-        />
+        {/* The pages that carry the chrome: every signed-in screen but the match board, so they share one layout
+            element instead of mounting it five times. */}
+        <Route element={<AppLayout />}>
+          <Route path="/home" element={<Home />} />
+          <Route path="/play" element={<Play />} />
+          <Route path="/social" element={<Social />} />
+          <Route path="/shop" element={<CardShop />} />
+          <Route path="/cards" element={<MyCards />} />
+          <Route path="/packs" element={<MyPacks />} />
+          <Route path="/welcome" element={<Welcome />} />
+        </Route>
+        {/* The board, deliberately outside the chrome: a duel owns the whole screen. */}
         <Route
           path="/match/:matchId"
           element={
@@ -125,39 +143,9 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/shop"
-          element={
-            <ProtectedRoute>
-              <CardShop />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cards"
-          element={
-            <ProtectedRoute>
-              <MyCards />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/packs"
-          element={
-            <ProtectedRoute>
-              <MyPacks />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/welcome"
-          element={
-            <ProtectedRoute>
-              <Welcome />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/lobby" replace />} />
+        {/* The old Lobby is retired: its matchmaking is `/play`, its cards/shop links are on `/home`. */}
+        <Route path="/lobby" element={<Navigate to="/home" replace />} />
+        <Route path="*" element={<Navigate to="/home" replace />} />
       </Routes>
     </div>
   );
