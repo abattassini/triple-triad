@@ -1,0 +1,127 @@
+/* The inbox panel. Like every `BareModal` consumer it brings its own surface — the shell has none — and its own
+   width, because the shell's paper is shrink-to-fit and a `width: 100%` box would resolve against an auto-sized one
+   (`PlayerProfile.scss` records the same trap). `min(420px, 100vw - 64px)` is definite at every width.
+
+   The list is the only thing that scrolls: the title row and the Close button stay where they are, so a long inbox
+   cannot hide the way out. */
+
+.notification-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(420px, calc(100vw - 64px));
+  max-height: min(70vh, 560px);
+  box-sizing: border-box;
+  padding: 1.25rem;
+  color: #fff;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 2px solid #3a3a5e;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  &__title {
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  &__read-all {
+    color: #4a9eff !important;
+    text-transform: none !important;
+
+    &:disabled {
+      color: rgba(255, 255, 255, 0.3) !important;
+    }
+  }
+
+  &__waiting {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 0;
+  }
+
+  &__spinner {
+    color: #4a9eff;
+  }
+
+  &__empty {
+    padding: 1.25rem 0;
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+  }
+
+  &__error {
+    color: #ff9494;
+  }
+
+  /* The one scrolling region. `min-height: 0` is what lets a flex child actually scroll instead of pushing the
+     panel taller than its `max-height`. */
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+  }
+
+  &__row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.6rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid #3a3a5e;
+
+    /* Unread is a left edge rather than a colour: the row's text has to stay legible in both states, and a read row
+       still reads as history rather than as decoration. */
+    &--unread {
+      border-left: 3px solid #4a9eff;
+      background: rgba(74, 158, 255, 0.1);
+    }
+  }
+
+  &__avatar {
+    width: 36px !important;
+    height: 36px !important;
+    flex-shrink: 0;
+    border: 1px solid #4a9eff;
+    background: #16213e;
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  &__line {
+    /* A long login wraps inside the row instead of widening the panel. */
+    overflow-wrap: anywhere;
+  }
+
+  &__when {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.35rem;
+  }
+
+  &__close {
+    align-self: center;
+  }
+}

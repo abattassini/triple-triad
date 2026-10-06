@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import { BareModal } from './BareModal';
 import { PlayerProfile } from './PlayerProfile';
-import { apiService, CPU_OPPONENT_ID, type OpponentProfile } from '../services/api';
+import {
+  apiService,
+  CPU_OPPONENT_ID,
+  type FriendshipState,
+  type OpponentProfile,
+} from '../services/api';
 
 interface PlayerProfileModalProps {
   open: boolean;
@@ -31,6 +36,11 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({ open, lo
   const [profile, setProfile] = useState<OpponentProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0); // Only ever bumped by Try again, to re-run the effect below.
+  // The caller's relation to the player on screen, as the server answered it: what the action under the record is
+  // drawn from. Asking and accepting both replace it with the server's new value rather than guessing.
+  const [friendship, setFriendship] = useState<FriendshipState>('none');
+  const [isActing, setIsActing] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const newestRequest = useRef(0);
   const isCpu = login === CPU_OPPONENT_ID;
 
@@ -43,12 +53,17 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({ open, lo
     const isStale = () => request !== newestRequest.current;
     setProfile(null);
     setError(null);
+    setActionError(null);
+    setFriendship('none');
 
     apiService
       .getPlayerProfile(login)
       .then(result => {
         if (!isStale()) {
           setProfile(result);
+          // A profile fetched before this field existed carries no `friendship`; the safe reading of that is `none`,
+          // which offers the one action that is always legal — ask, which the server may answer as an accept.
+          setFriendship(result.friendship ?? 'none');
         }
       })
       .catch((failure: Error) => {
@@ -58,11 +73,69 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({ open, lo
       });
   }, [open, login, isCpu, attempt]);
 
+  // Asking and accepting are the two things this dialog can do, and both answer the pair's state as the server now
+  // sees it — which is what the button is redrawn from. That is why a mutual ask needs no special case here: the
+  // answer comes back `friends` (`plans/PLAN-022-notifications-and-friends/plan.md` §5 D3).
+  const act = async (action: 'ask' | 'accept') => {
+    setIsActing(true);
+    setActionError(null);
+
+    try {
+      const answer =
+        action === 'ask'
+          ? await apiService.requestFriend(login)
+          : await apiService.acceptFriend(login);
+      setFriendship(answer.friendship);
+    } catch (failure) {
+      setActionError(failure instanceof Error ? failure.message : 'That did not work.');
+    } finally {
+      setIsActing(false);
+    }
+  };
+
   // The CPU has no profile to show, and a closed dialog shows nothing: in both cases the DOM stays empty rather than
   // mounting a dialog nothing can fill.
   if (!open || isCpu) {
     return null;
   }
+
+  // The four states of the action, from the profile's `friendship` — and nothing else decides which one is drawn
+  // (`plans/PLAN-022-notifications-and-friends/plan.md` §3.5, §3.2's table):
+  //   `none`      → *Add friend*, which asks (and accepts theirs if they asked first)
+  //   `requested` → *Request sent*, inert: the request is theirs to answer now
+  //   `incoming`  → *Accept friend request*
+  //   `friends`   → a static badge, because there is nothing left to do from here (unfriending is the next plan's
+  //                 friend list, not a duel's profile panel)
+  // Declining is deliberately absent: that is the notification panel's job, where the request actually arrived.
+  const friendAction = (
+    <Box className="player-profile__friends">
+      {friendship === 'none' && (
+        <Button variant="contained" disabled={isActing} onClick={() => void act('ask')}>
+          Add friend
+        </Button>
+      )}
+
+      {friendship === 'requested' && (
+        <Button variant="outlined" disabled title="Waiting for them to answer">
+          Request sent
+        </Button>
+      )}
+
+      {friendship === 'incoming' && (
+        <Button variant="contained" disabled={isActing} onClick={() => void act('accept')}>
+          Accept friend request
+        </Button>
+      )}
+
+      {friendship === 'friends' && <span className="player-profile__friends-badge">Friends</span>}
+
+      {actionError && (
+        <Typography variant="body2" className="player-profile__error">
+          {actionError}
+        </Typography>
+      )}
+    </Box>
+  );
 
   return (
     <BareModal
@@ -99,7 +172,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({ open, lo
         </Box>
       )}
 
-      {profile && <PlayerProfile profile={profile} />}
+      {profile && <PlayerProfile profile={profile} action={friendAction} />}
     </BareModal>
   );
 };

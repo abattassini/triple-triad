@@ -100,6 +100,14 @@ $chrome-accent: #4a9eff;
   white-space: nowrap;
 }
 
+/* The header's third column: the notifications bell, hugging the right edge. Like the identity's column it is a
+   `minmax(0, 1fr)` track, so whatever the bell carries shrinks rather than pushing the title off centre. */
+.app-chrome__header-actions {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+}
+
 /* ── Mobile: the footer ───────────────────────────────────────────── */
 .app-chrome__footer {
   bottom: 0;

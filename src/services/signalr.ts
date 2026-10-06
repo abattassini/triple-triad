@@ -17,6 +17,13 @@ export type SignalRConnectionState = 'connected' | 'reconnecting' | 'reconnected
 class SignalRService {
   private connection: signalR.HubConnection | null = null;
   private listeners = new Set<(state: SignalRConnectionState) => void>();
+  /**
+   * How many parts of the app are currently holding the socket open. It is a **singleton**, and more than one part of
+   * the app needs it at once — the match board and the chrome's notification bell, which is mounted on every signed-in
+   * page — so the socket's life is a count rather than a flag. Without this, whichever part unmounted first would stop
+   * the connection under the other one's feet.
+   */
+  private refCount = 0;
 
   /** Subscribe to the connection's own state. Returns the unsubscribe function. */
   onStateChange(listener: (state: SignalRConnectionState) => void): () => void {
@@ -48,8 +55,23 @@ class SignalRService {
     });
   }
 
+  /**
+   * Open the connection, or join the one already open, and count this caller as a holder.
+   *
+   * **Ref-counted**: every call needs its matching `disconnect()`, and the socket is only stopped when the last holder
+   * lets go. A caller that arrives while the socket is already starting or reconnecting joins that attempt rather than
+   * building a second connection, which is what a "is it connected?" check alone would get wrong.
+   */
   async connect(): Promise<void> {
-    if (this.connection?.state === signalR.HubConnectionState.Connected) {
+    this.refCount += 1;
+
+    const state = this.connection?.state;
+    const isBusy =
+      state === signalR.HubConnectionState.Connected ||
+      state === signalR.HubConnectionState.Connecting ||
+      state === signalR.HubConnectionState.Reconnecting;
+
+    if (isBusy) {
       return;
     }
 
@@ -88,11 +110,33 @@ class SignalRService {
     }
   }
 
+  /**
+   * Let go of the connection. The socket is stopped only when the **last** holder does, so a page change that unmounts
+   * one consumer does not interrupt another's pushes.
+   */
   async disconnect(): Promise<void> {
-    if (this.connection) {
-      await this.connection.stop();
+    this.refCount = Math.max(0, this.refCount - 1);
+
+    const connection = this.connection;
+    if (this.refCount > 0 || !connection) {
+      return;
+    }
+
+    this.connection = null;
+
+    if (connection.state !== signalR.HubConnectionState.Disconnected) {
+      await connection.stop();
       console.log('🔌 SignalR Disconnected');
     }
+  }
+
+  // Ask the hub to put *this connection* in the caller's own notifications group, so the server can push to a player
+  // wherever they are. The login is not sent — the hub reads it from the JWT, which is what stops a client from
+  // subscribing to somebody else's inbox. It has to be called after every connect **and** every reconnect: the groups a
+  // connection had do not follow it to the new one.
+  async subscribeToNotifications(): Promise<void> {
+    if (!this.connection) throw new Error('Not connected');
+    await this.connection.invoke('SubscribeToNotifications', getAccessToken() ?? '');
   }
 
   // Join a match room

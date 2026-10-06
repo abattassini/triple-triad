@@ -16,6 +16,7 @@ import { SignIn } from './pages/SignIn';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { ResetPassword } from './pages/ResetPassword';
 import { useAuth } from './contexts/AuthContext';
+import { NotificationsProvider } from './contexts/NotificationsProvider';
 
 // Full-screen loader shown while the persisted session is being restored.
 function LoadingScreen() {
@@ -78,75 +79,79 @@ function AppLayout() {
 function App() {
   return (
     <div className="app">
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <PublicOnlyRoute>
-              <Landing />
-            </PublicOnlyRoute>
-          }
-        />
-        <Route
-          path="/create-account"
-          element={
-            <PublicOnlyRoute redirectTo="/welcome">
-              <AccountCreation />
-            </PublicOnlyRoute>
-          }
-        />
-        <Route
-          path="/sign-in"
-          element={
-            <PublicOnlyRoute>
-              <SignIn />
-            </PublicOnlyRoute>
-          }
-        />
-        {/* Password recovery. Both are public-only, and both sit above the catch-all below — a reset link arriving
+      {/* The inbox is app-wide state: the bell lives in the chrome, and the panel it opens must survive a page change
+          — so the provider is mounted once, above the routes rather than on the pages that show it (§3.5). */}
+      <NotificationsProvider>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <PublicOnlyRoute>
+                <Landing />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/create-account"
+            element={
+              <PublicOnlyRoute redirectTo="/welcome">
+                <AccountCreation />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/sign-in"
+            element={
+              <PublicOnlyRoute>
+                <SignIn />
+              </PublicOnlyRoute>
+            }
+          />
+          {/* Password recovery. Both are public-only, and both sit above the catch-all below — a reset link arriving
             from an email lands on /reset-password with ?token=…, which must reach this route rather than be
             redirected to Home. The GitHub Pages 404 shim (public/404.html + index.html) is what keeps that
             deep link working on a static host. */}
-        <Route
-          path="/forgot-password"
-          element={
-            <PublicOnlyRoute>
-              <ForgotPassword />
-            </PublicOnlyRoute>
-          }
-        />
-        <Route
-          path="/reset-password"
-          element={
-            <PublicOnlyRoute>
-              <ResetPassword />
-            </PublicOnlyRoute>
-          }
-        />
-        {/* The pages that carry the chrome: every signed-in screen but the match board, so they share one layout
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicOnlyRoute>
+                <ForgotPassword />
+              </PublicOnlyRoute>
+            }
+          />
+          <Route
+            path="/reset-password"
+            element={
+              <PublicOnlyRoute>
+                <ResetPassword />
+              </PublicOnlyRoute>
+            }
+          />
+          {/* The pages that carry the chrome: every signed-in screen but the match board, so they share one layout
             element instead of mounting it five times. */}
-        <Route element={<AppLayout />}>
-          <Route path="/home" element={<Home />} />
-          <Route path="/play" element={<Play />} />
-          <Route path="/social" element={<Social />} />
-          <Route path="/shop" element={<CardShop />} />
-          <Route path="/cards" element={<MyCards />} />
-          <Route path="/packs" element={<MyPacks />} />
-          <Route path="/welcome" element={<Welcome />} />
-        </Route>
-        {/* The board, deliberately outside the chrome: a duel owns the whole screen. */}
-        <Route
-          path="/match/:matchId"
-          element={
-            <ProtectedRoute>
-              <MatchPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* The old Lobby is retired: its matchmaking is `/play`, its cards/shop links are on `/home`. */}
-        <Route path="/lobby" element={<Navigate to="/home" replace />} />
-        <Route path="*" element={<Navigate to="/home" replace />} />
-      </Routes>
+          <Route element={<AppLayout />}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/play" element={<Play />} />
+            <Route path="/social" element={<Social />} />
+            <Route path="/shop" element={<CardShop />} />
+            <Route path="/cards" element={<MyCards />} />
+            <Route path="/packs" element={<MyPacks />} />
+            <Route path="/welcome" element={<Welcome />} />
+          </Route>
+          {/* The board, deliberately outside the chrome: a duel owns the whole screen. */}
+          <Route
+            path="/match/:matchId"
+            element={
+              <ProtectedRoute>
+                <MatchPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* The old Lobby is retired: its matchmaking is `/play`, its cards/shop links are on `/home`. */}
+          <Route path="/lobby" element={<Navigate to="/home" replace />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
+      </NotificationsProvider>
     </div>
   );
 }

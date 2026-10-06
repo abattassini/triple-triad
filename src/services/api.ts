@@ -144,6 +144,62 @@ export interface OpponentProfile {
   ties: number;
   /** Distinct cards owned — copies held of the same card do not count. */
   cardsOwned: number;
+  /**
+   * How the caller stands with this player, which is the one field here that is about *the reader* rather than about
+   * the profile's subject — the server computes it from the JWT (`plans/PLAN-022-notifications-and-friends/plan.md`
+   * §3.7). Optional in the type because a profile response cached in memory before this field existed is still valid;
+   * the panel treats a missing value as `none`.
+   */
+  friendship?: FriendshipState;
+}
+
+/**
+ * How two players stand with each other, **from the caller's point of view** — one indexed lookup on the server, and
+ * everything the opponent panel's button is drawn from. `pending` is deliberately not one of these: a row waiting for
+ * an answer is `requested` for the player who asked and `incoming` for the player who was asked, and those are two
+ * different screens (§3.2).
+ */
+export type FriendshipState = 'none' | 'requested' | 'incoming' | 'friends';
+
+/** The two notification kinds the server writes today. Anything else renders generically (see `NotificationPanel`). */
+export const FRIEND_REQUEST_TYPE = 'friend_request';
+export const FRIEND_ACCEPTED_TYPE = 'friend_accepted';
+
+/**
+ * One row of the inbox — what `GET api/notifications` answers, and what the panel lists. Named `GameNotification` and
+ * not `Notification`, because the latter is a DOM global and this file touches the DOM.
+ *
+ * `type` is a plain string rather than a union on purpose: the server is where kinds live, a new kind is a data change
+ * rather than a migration (§1.3), and a client that could not compile against an unknown kind would undo exactly that.
+ */
+export interface GameNotification {
+  id: number;
+  type: string;
+  /** Who caused it. */
+  actorLogin: string;
+  actorAvatarUrl: string | null;
+  /**
+   * What the row means **now**: null for a kind that is not about a friendship, and otherwise the pair's current
+   * state. This — not the row's age — is what decides whether the panel still offers an Accept button, so a request
+   * answered elsewhere stops offering one (§3.4).
+   */
+  friendshipState: FriendshipState | null;
+  /** The friendship the row is about, for the kinds that have one. */
+  subjectId: number | null;
+  createdAt: string;
+  readAt: string | null;
+}
+
+/** One page of the inbox, plus the number the bell's badge shows — one answer, because the bell wants both. */
+export interface NotificationsPage {
+  unreadCount: number;
+  notifications: GameNotification[];
+}
+
+/** What a friend action answers: the other player's **stored** login, and the pair's state from the caller's side. */
+export interface FriendshipAnswer {
+  login: string;
+  friendship: FriendshipState;
 }
 
 export interface SignInRequest {
@@ -532,6 +588,103 @@ class ApiService {
       }
       const error = await response.json().catch(() => null);
       throw new Error(error?.error || `Could not load ${login}'s profile.`);
+    }
+    return response.json();
+  }
+
+  // ── Notifications and friends ──────────────────────────────────────────────────────────────────────────────────
+  // Notification kinds live on the server (§1.3), so nothing here switches on `type`: the six calls below move data,
+  // and the panel decides what a row reads like.
+
+  // One page of the inbox, newest first, with the badge's number in the same answer. `limit = 0` asks for the count
+  // alone — what a badge refresh costs — and `beforeId` walks backwards through older rows.
+  async getNotifications(limit?: number, beforeId?: number): Promise<NotificationsPage> {
+    const query = new URLSearchParams();
+    if (limit !== undefined) {
+      query.set('limit', String(limit));
+    }
+    if (beforeId !== undefined) {
+      query.set('beforeId', String(beforeId));
+    }
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+
+    const response = await fetch(`${API_BASE_URL}/api/notifications${suffix}`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to load your notifications');
+    }
+    return response.json();
+  }
+
+  // Marks one notification read, answering the badge's new number. A 404 means the row is not the caller's (or no
+  // longer exists) — never a 403 — so an id cannot be used to probe somebody else's inbox.
+  async markNotificationRead(id: number): Promise<{ unreadCount: number }> {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      throw new Error('Could not mark that notification read');
+    }
+    return response.json();
+  }
+
+  // Marks the whole inbox read — the panel's *Mark all read*.
+  async markAllNotificationsRead(): Promise<{ unreadCount: number; markedRead: number }> {
+    const response = await fetch(`${API_BASE_URL}/api/notifications/read`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      throw new Error('Could not mark your notifications read');
+    }
+    return response.json();
+  }
+
+  // Asks another player to be friends. Asking again while your own request is outstanding is the same request, and
+  // asking someone who has already asked you **accepts theirs** — so a `friends` answer here needs no special path.
+  async requestFriend(login: string): Promise<FriendshipAnswer> {
+    return this.sendFriendAction(
+      `${API_BASE_URL}/api/friends/${encodeURIComponent(login)}`,
+      'POST'
+    );
+  }
+
+  // Accepts the request `login` has outstanding. A 409 means there was nothing from them to accept, which is what a
+  // stale panel gets instead of a silent friendship.
+  async acceptFriend(login: string): Promise<FriendshipAnswer> {
+    return this.sendFriendAction(
+      `${API_BASE_URL}/api/friends/${encodeURIComponent(login)}/accept`,
+      'POST'
+    );
+  }
+
+  // Removes whatever the two have: a decline, a cancelled request and an unfriending are one write, and the call is
+  // idempotent, so a stale panel's *Decline* is never an error.
+  async removeFriend(login: string): Promise<FriendshipAnswer> {
+    return this.sendFriendAction(
+      `${API_BASE_URL}/api/friends/${encodeURIComponent(login)}`,
+      'DELETE'
+    );
+  }
+
+  // The three friend actions differ only in route and method, and all three answer the same body — so the refusals are
+  // read in one place. The server's own sentence is preferred where there is one (`{ error }`), because it says *why*.
+  private async sendFriendAction(
+    url: string,
+    method: 'POST' | 'DELETE'
+  ): Promise<FriendshipAnswer> {
+    const response = await fetch(url, {
+      method,
+      headers: getAuthHeaders(),
+      body: method === 'POST' ? JSON.stringify({}) : undefined,
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'That friend action did not work.');
     }
     return response.json();
   }

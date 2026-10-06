@@ -64,6 +64,12 @@ export const useSignalR = () => {
     await signalRService.requestMatchStatus(matchId);
   }, []);
 
+  // Join this connection to the player's notifications group. The session hook re-subscribes on every connect and
+  // reconnect, because the groups belong to the connection and a reconnected socket is a new one.
+  const subscribeToNotifications = useCallback(async () => {
+    await signalRService.subscribeToNotifications();
+  }, []);
+
   return {
     isConnected: connectionState === 'connected' || connectionState === 'reconnected',
     connectionState,
@@ -75,5 +81,6 @@ export const useSignalR = () => {
     playCard,
     requestLegalMoves,
     requestMatchStatus,
+    subscribeToNotifications,
   };
 };

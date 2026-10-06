@@ -122,6 +122,38 @@
     }
   }
 
+  // The dialog's own action, under the record — the friend button. It is the last thing in the panel and it spans the
+  // panel's width, so a four-state button never changes the panel's shape by wrapping.
+  &__action {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  // The action's own row: one control, and room for a refusal sentence under it. Centred, because the button is the
+  // panel's last line and the panel is centred throughout.
+  &__friends {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  // The `friends` state is a badge rather than a button — there is nothing to press, so nothing pretends to be.
+  &__friends-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.3rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(78, 255, 74, 0.12);
+    border: 1px solid rgba(78, 255, 74, 0.4);
+    color: #4eff4a;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
   // Waiting and failure keep the panel's surface, so the dialog never changes shape while the call is in flight.
   &__spinner {
     color: #4a9eff;

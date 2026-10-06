@@ -9,6 +9,13 @@ import './PlayerProfile.scss';
 interface PlayerProfileProps {
   profile: OpponentProfile;
   className?: string;
+  /**
+   * An optional node under the record — where the panel's *action* goes. The panel itself stays inert
+   * (`plans/PLAN-022-notifications-and-friends/plan.md` §3.5): it knows nothing about friends, calls and buttons, and
+   * whoever owns the dialog decides what, if anything, may be done from here (`PlayerProfileModal` passes the friend
+   * button; the chrome's own profile passes nothing).
+   */
+  action?: React.ReactNode;
 }
 
 /**
@@ -25,7 +32,11 @@ interface PlayerProfileProps {
  * look like two different things on two screens. That XP line is the one field here the request did not name
  * (plan §5 D5).
  */
-export const PlayerProfile: React.FC<PlayerProfileProps> = ({ profile, className = '' }) => {
+export const PlayerProfile: React.FC<PlayerProfileProps> = ({
+  profile,
+  className = '',
+  action,
+}) => {
   const level = levelForXp(profile.experience);
   const into = xpIntoLevel(profile.experience);
 
@@ -79,6 +90,10 @@ export const PlayerProfile: React.FC<PlayerProfileProps> = ({ profile, className
           <span className="player-profile__tile-label">Ties</span>
         </Box>
       </Box>
+
+      {/* Whatever the dialog's owner allows from here — the friend button, on the opponent panel. The panel does not
+          look inside it, which is what keeps it usable anywhere (§3.5). */}
+      {action && <Box className="player-profile__action">{action}</Box>}
     </Box>
   );
 };

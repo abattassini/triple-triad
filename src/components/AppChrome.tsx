@@ -5,6 +5,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { FiHome, FiPlayCircle, FiUsers } from 'react-icons/fi';
 import { BareModal } from './BareModal';
+import { NotificationBell } from './NotificationBell';
+import { NotificationPanel } from './NotificationPanel';
 import { PlayerStats } from './PlayerStats';
 import { avatarUrlFor } from '../data/Avatar';
 import { useAuth } from '../contexts/AuthContext';
@@ -19,20 +21,26 @@ const NAV_ITEMS = [
 
 /**
  * The app chrome shared by every signed-in page except the match board: a **header** (the player's identity on the
- * left, the app's name centred) and a menu that is a **fixed footer** on phones and a **left bar** on wider screens.
- * The footer becomes the bar at 768px (the header hides there); at 1025px the header returns and owns the identity,
- * so the bar drops its own copy, widens, and shows the three labels beside doubled icons.
+ * left, the app's name centred, the notifications bell on the right) and a menu that is a **fixed footer** on phones
+ * and a **left bar** on wider screens. The footer becomes the bar at 768px; at 1025px the bar widens and shows the
+ * three labels beside doubled icons. The header itself is present at **every** width (`PLAN-021`'s review settled
+ * that), and it is the only place the identity lives — the bar carries the nav alone.
  *
  * The chrome is `z-index: 1100`, deliberately **below** MUI's modal layer (`1300`), so any `BareModal` darkens it and
  * swallows its clicks exactly like the rest of the page — the modal never has to know the chrome exists.
  *
  * Tapping the identity opens the player's own profile in a `BareModal` (the shared `PlayerStats` card), which is also
  * where Sign Out lives: these pages no longer mount the hamburger drawer that used to own it.
+ *
+ * The header's **third column** holds the notifications bell — the one place in the app a player learns somebody asked
+ * to be their friend (`plans/PLAN-022-notifications-and-friends/plan.md` §5 D5). It is the column that was empty, so
+ * the centred title is untouched by it.
  */
 export const AppChrome: React.FC = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const login = user?.login ?? '';
   const avatarSrc = avatarUrlFor(user?.avatarUrl);
@@ -40,6 +48,7 @@ export const AppChrome: React.FC = () => {
 
   const handleSignOut = () => {
     setIsProfileOpen(false);
+    setIsNotificationsOpen(false);
     signOut();
     navigate('/');
   };
@@ -76,12 +85,15 @@ export const AppChrome: React.FC = () => {
 
   return (
     <>
-      {/* The identity on the left, the app's name centred — shown at every width. */}
+      {/* The identity on the left, the app's name centred, the bell on the right — shown at every width. */}
       <header className="app-chrome__header">
         {identity}
         <Typography component="h1" className="app-chrome__title">
           Triple Triad
         </Typography>
+        <div className="app-chrome__header-actions">
+          <NotificationBell onClick={() => setIsNotificationsOpen(true)} />
+        </div>
       </header>
 
       {/* Desktop: the same three entries as a bar on the left, below the header. */}
@@ -113,6 +125,9 @@ export const AppChrome: React.FC = () => {
           </Button>
         </Box>
       </BareModal>
+
+      {/* The inbox, one dialog: opened by the bell and driven entirely by `NotificationsContext` (§3.5). */}
+      <NotificationPanel open={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
     </>
   );
 };

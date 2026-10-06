@@ -1,0 +1,33 @@
+/* The header's bell. It is a MUI `IconButton` inside a header that is a fixed dark strip, so it brings the header's
+   own colours rather than the theme's — and it keeps the icon at 24px so the third column stays narrow enough for the
+   centred title to keep its room. */
+
+.notification-bell {
+  color: rgba(255, 255, 255, 0.85) !important;
+  padding: 6px !important;
+
+  &:hover {
+    background: rgba(74, 158, 255, 0.15) !important;
+    color: #fff !important;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4a9eff;
+    outline-offset: 2px;
+  }
+}
+
+.notification-bell__icon {
+  font-size: 24px;
+}
+
+/* The number sits where MUI puts a badge by default; the outline is what keeps it legible against the avatar and the
+   title's glow behind it. */
+.notification-bell__badge .MuiBadge-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  border: 2px solid #0f0f23;
+  padding: 0 5px;
+  min-width: 20px;
+  height: 20px;
+}
