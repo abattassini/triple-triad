@@ -9,6 +9,27 @@ export const useSignalR = () => {
   // this number knows it has to re-join its match and re-read what it missed (SignalR does not replay).
   const [reconnectCount, setReconnectCount] = useState(0);
 
+  /**
+   * The hook's own hold on the socket, made explicit: `connect()` takes it and `disconnect()` gives it back — the same
+   * pair the effect below makes for the component's lifetime. They are returned because a **holder can outlive a
+   * session**: `NotificationsProvider` is mounted above the routes and never unmounts when a player signs out, so
+   * without this the socket stayed open after the sign-out and the server kept reporting that player online to everyone
+   * else (`plans/PLAN-023-social-friends-list/plan.md` §11 — the bug a player found).
+   */
+  const connect = useCallback(async () => {
+    try {
+      await signalRService.connect();
+      setConnectionState(signalRService.getState());
+    } catch (error) {
+      console.error('Failed to connect to SignalR:', error);
+      setConnectionState('disconnected');
+    }
+  }, []);
+
+  const disconnect = useCallback(async () => {
+    await signalRService.disconnect();
+  }, []);
+
   useEffect(() => {
     const unsubscribe = signalRService.onStateChange(state => {
       setConnectionState(state);
@@ -17,25 +38,15 @@ export const useSignalR = () => {
       }
     });
 
-    const connect = async () => {
-      try {
-        await signalRService.connect();
-        setConnectionState(signalRService.getState());
-      } catch (error) {
-        console.error('Failed to connect to SignalR:', error);
-        setConnectionState('disconnected');
-      }
-    };
-
-    connect();
+    void connect();
 
     return () => {
       // The listener goes first: stopping the connection would otherwise report a disconnect to a component that is
       // already gone.
       unsubscribe();
-      signalRService.disconnect();
+      void disconnect();
     };
-  }, []);
+  }, [connect, disconnect]);
   const on = useCallback((event: string, callback: (...args: unknown[]) => void) => {
     signalRService.on(event, callback);
   }, []);
@@ -74,6 +85,8 @@ export const useSignalR = () => {
     isConnected: connectionState === 'connected' || connectionState === 'reconnected',
     connectionState,
     reconnectCount,
+    connect,
+    disconnect,
     on,
     off,
     joinMatch,

@@ -202,6 +202,26 @@ export interface FriendshipAnswer {
   friendship: FriendshipState;
 }
 
+/**
+ * One friend, as the list draws them (`plans/PLAN-023-social-friends-list/plan.md` §3.2): the other player's login and
+ * avatar, and whether they are online **right now** — which the server answers from its own live connections, so it
+ * means "has the app open", not "has been seen recently".
+ *
+ * Deliberately thin: the list shows a name, a face and a dot, and `PlayerProfileModal` fetches anything more when the
+ * player opens it.
+ */
+export interface FriendSummary {
+  login: string;
+  avatarUrl: string | null;
+  online: boolean;
+}
+
+/**
+ * The presence event the server pushes to a player's own connections when one of their friends comes online or goes
+ * offline (`FriendPresenceChanged`, §3.3). Named once here so the listener and the documentation cannot drift.
+ */
+export const FRIEND_PRESENCE_CHANGED = 'FriendPresenceChanged';
+
 export interface SignInRequest {
   identifier: string;
   password: string;
@@ -595,6 +615,18 @@ class ApiService {
   // ── Notifications and friends ──────────────────────────────────────────────────────────────────────────────────
   // Notification kinds live on the server (§1.3), so nothing here switches on `type`: the six calls below move data,
   // and the panel decides what a row reads like.
+
+  // The caller's friends, accepted pairs only, each with an avatar and a live online flag — what the Social page lists
+  // (`plans/PLAN-023-social-friends-list/plan.md` §3.2). Pending requests are not here: they belong to the bell.
+  async getFriends(): Promise<{ friends: FriendSummary[] }> {
+    const response = await fetch(`${API_BASE_URL}/api/friends`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to load your friends');
+    }
+    return response.json();
+  }
 
   // One page of the inbox, newest first, with the badge's number in the same answer. `limit = 0` asks for the count
   // alone — what a badge refresh costs — and `beforeId` walks backwards through older rows.

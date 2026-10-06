@@ -1,0 +1,109 @@
+/* The friend action sheet. What it brings that the shared shell does not: a surface. `BareModal`'s dialog deliberately
+   has none — a consumer paints its own panel — so this is that panel, and its siblings in look are `PlayerProfile` and
+   the inbox panel.
+
+   The paper's own colours live in the component's `slotProps.paper.sx` (emotion's class beats Paper's defaults); what
+   is here is the inside of the dialog. */
+
+.friend-actions__head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-bottom: 0.5rem;
+}
+
+.friend-actions__avatar {
+  width: 48px !important;
+  height: 48px !important;
+  flex-shrink: 0;
+  border: 2px solid #4a9eff;
+  background: #16213e;
+}
+
+.friend-actions__avatar-fallback {
+  font-size: 28px;
+}
+
+.friend-actions__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.friend-actions__name {
+  font-weight: 700;
+  line-height: 1.2;
+  /* A long login wraps inside the title rather than widening the dialog. */
+  overflow-wrap: anywhere;
+}
+
+.friend-actions__presence {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+
+  &--online {
+    color: #4eff4a;
+  }
+}
+
+/* The stack of options — the one region that scrolls, so Cancel is always reachable. */
+.friend-actions__options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: calc(100dvh - 224px);
+  overflow-y: auto;
+  padding-top: 0.25rem;
+}
+
+.friend-actions__option {
+  justify-content: flex-start !important;
+  padding: 0.7rem 0.9rem !important;
+  border-color: #3a3a5e !important;
+  color: #fff !important;
+  text-align: left;
+
+  &:hover:not(.Mui-disabled) {
+    border-color: #4a9eff !important;
+    background: rgba(74, 158, 255, 0.12) !important;
+  }
+
+  /* Disabled — the friend is offline — and the **greyed label is the whole signal**: no caption explains it, so the
+     text has to stop looking pressable. The base rule above forces white, which would otherwise beat MUI's own
+     dimming, so the disabled colour is set here with the same `!important` and a higher specificity. */
+  &.Mui-disabled {
+    color: rgba(255, 255, 255, 0.4) !important;
+  }
+
+  /* Remove friend is the one destructive option, and it reads that way before it is pressed. */
+  &--danger {
+    color: #ff6b6b !important;
+    border-color: rgba(255, 107, 107, 0.5) !important;
+
+    &:hover:not(.Mui-disabled) {
+      border-color: #ff6b6b !important;
+      background: rgba(255, 107, 107, 0.12) !important;
+    }
+  }
+}
+
+/* Label and hint stacked, which is what an option with a rule under it needs. */
+.friend-actions__label {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  line-height: 1.3;
+}
+
+.friend-actions__hint {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.friend-actions__cancel {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 1rem 1rem;
+}

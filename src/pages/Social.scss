@@ -1,7 +1,9 @@
+/* The Social page — the friends list. Its two dialogs bring their own styles (`FriendActionsDialog.scss`,
+   `RemoveFriendConfirmModal.scss`), so nothing here knows what a dialog looks like. */
+
 .social {
   align-self: stretch;
   width: 100%;
-  min-height: 100vh;
 }
 
 .social-container {
@@ -10,6 +12,10 @@
 }
 
 .social-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
   .social-title {
     color: #fff;
     text-align: center;
@@ -20,52 +26,148 @@
   .social-subtitle {
     color: rgba(255, 255, 255, 0.7);
     text-align: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
   }
 }
 
-/* The page's long latin block: enough text to scroll past the viewport. Left-aligned, unlike the centred heading and
-   panel above it, so it reads as an article rather than as page copy. Remove with `LOREM`. */
-.social-filler {
-  margin-top: 2rem;
-  text-align: left;
+/* Search Player: above the friends, as the request asks, and disabled because the action is a future plan. It carries
+   a `title` saying so — a button that is simply dead reads as a bug. Twice its natural width (a plain outlined button
+   is ~150px with this label), capped at the container so a 320px phone does not overflow. */
+.social-search {
+  width: min(300px, 100%);
+  margin-bottom: 1.75rem;
+  border-color: #3a3a5e !important;
+  color: rgba(255, 255, 255, 0.45) !important;
 
-  &__section {
-    margin-bottom: 2rem;
-  }
-
-  &__heading {
-    color: #4a9eff;
-    font-weight: 700;
-    margin-bottom: 0.75rem;
-  }
-
-  &__paragraph {
-    color: rgba(255, 255, 255, 0.78);
-    margin-bottom: 1rem;
+  /* MUI dims a disabled button; this keeps it legible against the page instead of half-faded. */
+  &.Mui-disabled {
+    color: rgba(255, 255, 255, 0.45) !important;
   }
 }
 
-.social-coming-soon {
-  background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
-  border: 2px solid #3a3a5e;
-  border-radius: 12px !important;
-  padding: 2rem 1.5rem;
-  text-align: center;
+.social-friends {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* One section: its heading and its rows share one column, capped at **600px** and centred, so a wide desktop does not
+   stretch a list of names across the page. The cap lives on the section rather than on `__list` only so the two cannot
+   drift apart — a heading starting at the container's edge above rows starting 60px in reads as a mistake. On a phone
+   the viewport is already narrower than the cap, so it changes nothing. */
+.social-section {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 
   &__title {
-    color: #ffcc00;
+    color: #fff;
     font-weight: 700;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
   }
 
-  &__title-icon {
-    vertical-align: -0.12em;
-    margin-right: 0.4rem;
-    font-size: 0.85em;
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+  }
+}
+
+/* One friend, as a button — because that is what it is: it opens their actions. Keyboard-reachable and focus-visible,
+   since a list of names that cannot be tabbed to is a list most players cannot use. */
+.social-friend {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid #3a3a5e;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    transform 120ms ease;
+
+  &:hover {
+    border-color: #4a9eff;
   }
 
-  &__caption {
-    color: rgba(255, 255, 255, 0.7);
+  &:focus-visible {
+    outline: 2px solid #4a9eff;
+    outline-offset: 2px;
   }
+
+  &__avatar {
+    width: 40px !important;
+    height: 40px !important;
+    flex-shrink: 0;
+    border: 2px solid #4a9eff;
+    background: #16213e;
+  }
+
+  &__avatar-fallback {
+    font-size: 24px;
+  }
+
+  /* The name takes the room, so the dot sits on one right edge for every row whatever the login lengths are. */
+  &__login {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  /* Presence at a glance: a lit green dot for online, a dull one for offline. The accessible name carries the same
+     fact, so the dot is decoration rather than the only signal. */
+  &__dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    &--online {
+      background: #4eff4a;
+      border-color: #4eff4a;
+      box-shadow: 0 0 6px rgba(78, 255, 74, 0.6);
+    }
+  }
+}
+
+.social-waiting {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+
+  &__spinner {
+    color: #4a9eff;
+  }
+}
+
+.social-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  text-align: center;
+
+  &__message {
+    color: #ff9494;
+  }
+}
+
+.social-empty {
+  padding: 1.5rem 0;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
 }

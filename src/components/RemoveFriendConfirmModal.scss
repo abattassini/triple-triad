@@ -1,0 +1,43 @@
+/* The confirm step's panel, inside a `BareModal` — which has no surface of its own, so this paints the usual one
+   (`PlayerProfile.scss` records the same reasoning, including the definite width: the shell's paper is
+   shrink-to-fit, so `width: 100%` would resolve against an auto-sized box). */
+
+.friend-remove {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(360px, calc(100vw - 64px));
+  box-sizing: border-box;
+  padding: 1.5rem 1.25rem;
+  color: #fff;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 2px solid #3a3a5e;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  text-align: center;
+
+  &__title {
+    font-weight: 700;
+    line-height: 1.2;
+    /* A long login wraps inside the panel instead of widening it. */
+    overflow-wrap: anywhere;
+  }
+
+  &__caption {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  &__error {
+    color: #ff9494;
+  }
+
+  &__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 0.25rem;
+  }
+}

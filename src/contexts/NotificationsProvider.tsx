@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiService, type GameNotification } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from './AuthContext';
@@ -14,14 +14,47 @@ import { NotificationsContext, type NotificationsContextValue } from './Notifica
  * after an action. A hint that never arrives costs a delay, not a notification — the next open or reconnect reads it.
  */
 export const NotificationsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   // The same hook the board uses. The socket underneath is ref-counted, so the bell holding it open and the board
   // holding it open are two holders of one connection rather than a fight over it (`signalr.ts`, §5 D10).
-  const { isConnected, on, off, subscribeToNotifications, reconnectCount } = useSignalR();
+  const { isConnected, on, off, subscribeToNotifications, reconnectCount, connect, disconnect } =
+    useSignalR();
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<GameNotification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Whether this provider is currently holding the socket. It starts held, because `useSignalR` takes its own hold when
+   * it mounts — the pair below only ever *gives that hold back* and *takes it again*, so the count never drifts.
+   */
+  const holdsSocket = useRef(true);
+
+  /**
+   * The socket belongs to the **session**, not to the page. This provider is mounted above the routes, which is what
+   * keeps the socket up across a page change — and it is also the one holder that does *not* unmount on sign-out, so
+   * without this nothing would ever close the connection. A socket left open after a sign-out keeps its player online
+   * for everyone looking at their friends list: that is the bug a player reported (`PLAN-023` §11), and it is why a
+   * refresh did not help — the server was telling the truth.
+   */
+  useEffect(() => {
+    // While the session is still being restored there is no answer to "is anybody signed in", so the socket is left
+    // exactly as the hook left it: acting on the not-yet-known answer would tear down a restored session's connection.
+    if (loading) {
+      return;
+    }
+
+    if (!isAuthenticated && holdsSocket.current) {
+      holdsSocket.current = false;
+      void disconnect();
+      return;
+    }
+
+    if (isAuthenticated && !holdsSocket.current) {
+      holdsSocket.current = true;
+      void connect();
+    }
+  }, [loading, isAuthenticated, connect, disconnect]);
 
   // The badge's number alone — `limit=0` costs no rows. Deliberately quiet on failure: a number that cannot refresh
   // is not worth an error on screen, and the next push or panel-open reconciles it.
