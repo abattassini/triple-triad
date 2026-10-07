@@ -2,16 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import { BareModal } from './BareModal';
 import { PlayerProfile } from './PlayerProfile';
-import {
-  apiService,
-  CPU_OPPONENT_ID,
-  type FriendshipState,
-  type OpponentProfile,
-} from '../services/api';
+import { apiService, type FriendshipState, type OpponentProfile } from '../services/api';
 
 interface PlayerProfileModalProps {
   open: boolean;
-  /** Whose profile to show. Never the CPU sentinel — that is checked here as well as at the trigger. */
+  /** Whose profile to show. */
   login: string;
   onClose: () => void;
 }
@@ -22,9 +17,7 @@ interface PlayerProfileModalProps {
  * of this (`plans/PLAN-020-opponent-profile/plan.md` §3.2). The shell is the only thing here that knows what a dialog
  * is, which is exactly the split the request asked for.
  *
- * Three things it refuses to do:
- *  - **Ask about the CPU.** `"AI"` is a sentinel, not a player row, so the only answer it could get is a 404. The
- *    trigger never offers it, and this guard means a future caller cannot make the request either.
+ * Two things it refuses to do:
  *  - **Trap the player while waiting.** The shell's own `BareModalLoading` is deliberately non-dismissable (it stands
  *    in for a flow that is about to move the player somewhere), so a passive panel cannot use it: the waiting state
  *    lives *inside* this dialog, which Esc and a backdrop click can always close.
@@ -42,10 +35,9 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({ open, lo
   const [isActing, setIsActing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const newestRequest = useRef(0);
-  const isCpu = login === CPU_OPPONENT_ID;
 
   useEffect(() => {
-    if (!open || isCpu) {
+    if (!open) {
       return;
     }
 
@@ -71,7 +63,7 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({ open, lo
           setError(failure.message);
         }
       });
-  }, [open, login, isCpu, attempt]);
+  }, [open, login, attempt]);
 
   // Asking and accepting are the two things this dialog can do, and both answer the pair's state as the server now
   // sees it — which is what the button is redrawn from. That is why a mutual ask needs no special case here: the
@@ -93,9 +85,8 @@ export const PlayerProfileModal: React.FC<PlayerProfileModalProps> = ({ open, lo
     }
   };
 
-  // The CPU has no profile to show, and a closed dialog shows nothing: in both cases the DOM stays empty rather than
-  // mounting a dialog nothing can fill.
-  if (!open || isCpu) {
+  // A closed dialog shows nothing, so the DOM stays empty rather than mounting one nothing can fill.
+  if (!open) {
     return null;
   }
 

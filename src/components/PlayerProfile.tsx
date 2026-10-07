@@ -70,9 +70,15 @@ export const PlayerProfile: React.FC<PlayerProfileProps> = ({
         <span className="player-profile__cards-icon" aria-hidden="true">
           <FiCreditCard />
         </span>
-        <span className="player-profile__cards-value">{profile.cardsOwned.toLocaleString()}</span>
+        <span className="player-profile__cards-value">
+          {profile.cardsOwned === null ? '??' : profile.cardsOwned.toLocaleString()}
+        </span>
         <span className="player-profile__cards-label">
-          {profile.cardsOwned === 1 ? 'card owned' : 'cards owned'}
+          {profile.cardsOwned === null
+            ? 'cards'
+            : profile.cardsOwned === 1
+              ? 'card owned'
+              : 'cards owned'}
         </span>
       </Box>
 

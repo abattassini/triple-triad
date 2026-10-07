@@ -56,10 +56,6 @@ export const HAND_SIZE = 5;
 // player owns nothing in, so all ten always exist as rows.
 export const CARD_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-// The login the server seats as the second player when the opponent is the CPU: the sentinel the game tables hold,
-// and an identity rather than a name. The label a player reads (the board's "CPU") is presentation on top of it.
-export const CPU_OPPONENT_ID = 'AI';
-
 export interface Match {
   id: number;
   player1Id: string;
@@ -142,8 +138,11 @@ export interface OpponentProfile {
   wins: number;
   losses: number;
   ties: number;
-  /** Distinct cards owned — copies held of the same card do not count. */
-  cardsOwned: number;
+  /**
+   * Distinct cards owned — copies held of the same card do not count. **`null` for a bot**: its collection is not
+   * shown yet, and the panel draws "??" instead of a figure (plans/PLAN-025-bots/plan.md §3.9).
+   */
+  cardsOwned: number | null;
   /**
    * How the caller stands with this player, which is the one field here that is about *the reader* rather than about
    * the profile's subject — the server computes it from the JWT (`plans/PLAN-022-notifications-and-friends/plan.md`
@@ -449,6 +448,22 @@ class ApiService {
     if (!response.ok) {
       const error = await response.json().catch(() => null);
       throw new Error(error?.error || 'Failed to start the match');
+    }
+    return response.json();
+  }
+
+  // The Quick Match fallback (plans/PLAN-025-bots/plan.md): after the client's wait found no human, the server seats an
+  // online bot — or returns the human who joined in the meantime, so a real game is never taken away. Same shape as
+  // `quickMatch`, so the picker opens the same way against a bot as against a person.
+  async quickBot(rules: MatchRule[]): Promise<JoinMatchResponse> {
+    const response = await fetch(`${API_BASE_URL}/api/game/match/quick-bot`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ rules }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'Failed to find an opponent');
     }
     return response.json();
   }

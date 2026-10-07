@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { Alert, Box, Typography, CircularProgress, Container, Button } from '@mui/material';
-import { FiCpu, FiPlayCircle } from 'react-icons/fi';
+import { FiPlayCircle } from 'react-icons/fi';
 import { ActionTile } from '../components/ActionTile';
 import { BareModal, BareModalLoading } from '../components/BareModal';
 import { SelectHandModal } from '../components/SelectHandModal';
-import { apiService, ALL_MATCH_RULES, CPU_OPPONENT_ID, type MatchRule } from '../services/api';
+import { apiService, ALL_MATCH_RULES, type MatchRule } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
 import './Play.scss';
@@ -13,11 +13,13 @@ import './Play.scss';
 /** Where the Quick Match flow is: idle → the rules modal → searching → picking → waiting → the board. */
 type MatchPhase = 'idle' | 'searching' | 'picking' | 'waiting';
 
-/** Who the rules modal is about to look for: a person, or the CPU. */
-type OpponentKind = 'human' | 'cpu';
-
 /** How often the waiting panel checks the match while the opponent picks — the MatchReady push is the fast path. */
 const READINESS_POLL_MS = 2000;
+
+// How long a Quick Match gives a real opponent before a bot steps in (plans/PLAN-025-bots/plan.md): a random wait in
+// this window, so the fallback never fires at a fixed, predictable moment.
+const BOT_FALLBACK_MIN_MS = 4000;
+const BOT_FALLBACK_MAX_MS = 8000;
 
 export const Play: React.FC = () => {
   const { user, refreshUser } = useAuth();
@@ -27,10 +29,10 @@ export const Play: React.FC = () => {
 
   // Where the Quick Match flow is (see MatchPhase above).
   const [phase, setPhase] = useState<MatchPhase>('idle');
-  // Which opponent the rules modal's two options will start a match against (set by the tile that opened it).
-  const [opponentKind, setOpponentKind] = useState<OpponentKind>('human');
-  // True while that start call is in flight, so neither tile can be clicked twice.
+  // True while that start call is in flight, so the tile cannot be clicked twice.
   const [isStarting, setIsStarting] = useState(false);
+  // The pending bot fallback: while searching, a real opponent gets a random 5–15 s before a bot is seated.
+  const botFallback = useRef<number | null>(null);
   // The match being set up — and, while waiting, the one about to be opened.
   const [matchId, setMatchId] = useState<number | null>(null);
   // The rules the player is waiting with, so the searching state can name them.
@@ -79,6 +81,11 @@ export const Play: React.FC = () => {
 
   /** A dead end (a timeout, a cancel, a failed call): the tiles come back with the reason on screen. */
   const endSearch = useCallback((message?: string) => {
+    if (botFallback.current !== null) {
+      window.clearTimeout(botFallback.current);
+      botFallback.current = null;
+    }
+
     setPhase('idle');
     setMatchId(null);
     setIsConfirming(false);
@@ -88,6 +95,36 @@ export const Play: React.FC = () => {
       setStatusMessage(message);
     }
   }, []);
+
+  // The fallback timer must not outlive the page.
+  useEffect(
+    () => () => {
+      if (botFallback.current !== null) {
+        window.clearTimeout(botFallback.current);
+      }
+    },
+    []
+  );
+
+  /**
+   * No human turned up in the wait window: ask the server to seat an online bot instead
+   * (plans/PLAN-025-bots/plan.md). If a human joined just as the timer fired, the server returns that existing match
+   * rather than replacing it, so a real game is never taken away — the picker opens either way.
+   */
+  const fallbackToBot = useCallback(
+    async (rules: MatchRule[]) => {
+      try {
+        const { match } = await apiService.quickBot(rules);
+        await enterRoom(match.id);
+        setMatchId(match.id);
+        setPhase('picking');
+      } catch (error) {
+        console.error('Bot fallback failed:', error);
+        endSearch(`Could not find an opponent: ${(error as Error).message}`);
+      }
+    },
+    [enterRoom, endSearch]
+  );
   useEffect(() => {
     if (!isConnected || !login) return;
 
@@ -98,6 +135,12 @@ export const Play: React.FC = () => {
       console.log('Match joined:', data);
 
       if (data.status === 'active' && phase === 'searching') {
+        // A real opponent turned up: the bot fallback is no longer wanted.
+        if (botFallback.current !== null) {
+          window.clearTimeout(botFallback.current);
+          botFallback.current = null;
+        }
+
         setMatchId(data.matchId);
         setPhase('picking');
       }
@@ -218,8 +261,16 @@ export const Play: React.FC = () => {
         return;
       }
 
-      // Nobody compatible was waiting, so we are the one being found and the tile keeps spinning until somebody joins.
+      // Nobody compatible was waiting, so we are the one being found. A real opponent gets a random 5–15 s before we
+      // fall back to a bot; a human who joins in the meantime cancels the timer through its MatchJoined push.
       console.log('Waiting for opponent...', match.id);
+      const delay =
+        BOT_FALLBACK_MIN_MS +
+        Math.floor(Math.random() * (BOT_FALLBACK_MAX_MS - BOT_FALLBACK_MIN_MS + 1));
+      botFallback.current = window.setTimeout(() => {
+        botFallback.current = null;
+        void fallbackToBot(rules);
+      }, delay);
     } catch (error) {
       console.error('Quick match error:', error);
       endSearch(`Failed to start quick match: ${(error as Error).message}`);
@@ -227,42 +278,6 @@ export const Play: React.FC = () => {
       setIsStarting(false);
     }
   };
-
-  /**
-   * Quick Match against CPU: there is nobody to search for. The match is created with the CPU already seated — and
-   * with its hand filed — so the same rules choice leads straight to the picker, and on to the board.
-   */
-  const startCpuMatch = async (rules: MatchRule[]) => {
-    if (!login || !isConnected) {
-      alert('Please wait for connection...');
-      return;
-    }
-
-    setIsChoosingRules(false);
-    setStatusMessage(null);
-    setPickError(null);
-    setMatchId(null);
-    setIsStarting(true);
-
-    try {
-      const created = await apiService.createMatch(CPU_OPPONENT_ID, rules, {
-        pickHandLater: true,
-      });
-      await enterRoom(created.match.id);
-
-      setMatchId(created.match.id);
-      setPhase('picking');
-    } catch (error) {
-      console.error('CPU match error:', error);
-      endSearch(`Failed to start the match against the CPU: ${(error as Error).message}`);
-    } finally {
-      setIsStarting(false);
-    }
-  };
-
-  /** Whichever starter the rules modal was opened for (the tile decided the kind). */
-  const startChosenMatch = (rules: MatchRule[]) =>
-    opponentKind === 'cpu' ? startCpuMatch(rules) : startMatch(rules);
 
   /**
    * Continue in the picker: file the five cards. Both players do exactly this once the match exists, and this is the
@@ -278,13 +293,8 @@ export const Play: React.FC = () => {
     try {
       await apiService.setMatchHand(matchId, cardIds);
 
-      // Against the CPU both hands are in the moment ours is — it filed its own when the match was created — so
-      // there is nothing left to wait for and the board opens right away.
-      if (opponentKind === 'cpu') {
-        await openBoard(matchId);
-        return;
-      }
-
+      // Both hands open the board: against a bot ours is the second one in, so the MatchReady push (or the poll) opens
+      // it a beat later — there is no special case here any more.
       setPhase('waiting');
     } catch (error) {
       setPickError((error as Error).message);
@@ -344,12 +354,9 @@ export const Play: React.FC = () => {
           <ActionTile
             icon={<FiPlayCircle />}
             title="Quick Match"
-            caption="Join a match with a random opponent"
+            caption="Find a random opponent"
             actionLabel="Quick Match"
-            onAction={() => {
-              setOpponentKind('human');
-              setIsChoosingRules(true);
-            }}
+            onAction={() => setIsChoosingRules(true)}
             actionDisabled={!isConnected || phase !== 'idle' || isStarting}
           >
             {phase === 'searching' ? (
@@ -374,20 +381,6 @@ export const Play: React.FC = () => {
               </Box>
             ) : undefined}
           </ActionTile>
-
-          {/* The CPU tile: same rules choice, nobody to search for. It is the second option because it is Quick
-                Match's fallback in spirit — a match right now, just not against a person. */}
-          <ActionTile
-            icon={<FiCpu />}
-            title="Quick Match against CPU"
-            caption="Play a full match against the computer right away"
-            actionLabel="Quick Match against CPU"
-            onAction={() => {
-              setOpponentKind('cpu');
-              setIsChoosingRules(true);
-            }}
-            actionDisabled={!isConnected || phase !== 'idle' || isStarting}
-          />
         </Box>
       </Container>
 
@@ -403,12 +396,8 @@ export const Play: React.FC = () => {
         ariaLabel="Quick Match options"
       >
         <Typography variant="h5" className="play-rules-modal__title">
-          {opponentKind === 'cpu' ? (
-            <FiCpu className="page-title-icon" aria-hidden="true" />
-          ) : (
-            <FiPlayCircle className="page-title-icon" aria-hidden="true" />
-          )}
-          {opponentKind === 'cpu' ? 'Quick Match against CPU' : 'Quick Match'}
+          <FiPlayCircle className="page-title-icon" aria-hidden="true" />
+          Quick Match
         </Typography>
         <Typography variant="body2" className="play-rules-modal__hint">
           Pick how you want to play
@@ -421,7 +410,7 @@ export const Play: React.FC = () => {
             size="large"
             fullWidth
             className="play-rules-modal__option"
-            onClick={() => startChosenMatch([])}
+            onClick={() => startMatch([])}
           >
             <span className="play-rules-modal__option-label">Basic Match</span>
             <span className="play-rules-modal__option-caption">No special rules</span>
@@ -433,7 +422,7 @@ export const Play: React.FC = () => {
             size="large"
             fullWidth
             className="play-rules-modal__option play-rules-modal__option--rules"
-            onClick={() => startChosenMatch(ALL_MATCH_RULES)}
+            onClick={() => startMatch(ALL_MATCH_RULES)}
           >
             <span className="play-rules-modal__option-label">Match with Rules</span>
             <span className="play-rules-modal__option-caption">
@@ -457,10 +446,7 @@ export const Play: React.FC = () => {
           and it closes on its own — `isStarting` is cleared in the same batch that moves the phase on, so the
           searching tile (or the picker) is what the player sees next. It cannot be dismissed, because the call behind
           it decides where the flow goes next. */}
-      <BareModalLoading
-        open={isStarting}
-        caption={opponentKind === 'cpu' ? 'Setting up your match…' : 'Finding you an opponent…'}
-      />
+      <BareModalLoading open={isStarting} caption="Finding you an opponent…" />
 
       {/* The picker, or the wait for the opponent's pick. Its own modal, so the page behind stays blocked while a
           match is being set up; Cancel is offered while picking only — once the hand is committed, the ways out are

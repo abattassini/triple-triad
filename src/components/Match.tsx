@@ -40,7 +40,6 @@ import {
 } from 'react-icons/fi';
 import {
   apiService,
-  CPU_OPPONENT_ID,
   HAND_SIZE,
   type Card as ApiCard,
   type CardPlacement,
@@ -780,8 +779,8 @@ export const Match: React.FC = () => {
 
     const opponent = match.player1Id === userId ? match.player2Id : match.player1Id;
 
-    // The CPU plays under the sentinel login — an identity, not a name — so it is never shown as one.
-    return opponent === CPU_OPPONENT_ID ? 'CPU' : opponent;
+    // A bot is an ordinary login now (plans/PLAN-025-bots/plan.md), so the opponent is always shown by name.
+    return opponent ?? 'Opponent';
   };
 
   // Loading state
@@ -856,10 +855,9 @@ export const Match: React.FC = () => {
   const opponentName = getOpponentName();
   const playerScore = match.player1Id === userId ? match.player1Score : match.player2Score;
   const opponentScore = match.player1Id === userId ? match.player2Score : match.player1Score;
-  // The opponent's login exactly as the match stores it (`"AI"` for the CPU — an identity rather than a name), and
-  // whether that makes them somebody whose profile can be looked up at all (PLAN-020).
+  // The opponent's login exactly as the match stores it. Every opponent is a real login now — a person or a bot — so
+  // the name is always a link to a profile (plans/PLAN-025-bots/plan.md).
   const opponentLogin = match.player1Id === userId ? match.player2Id : match.player1Id;
-  const isCpuOpponent = opponentLogin === CPU_OPPONENT_ID;
   // Rewards granted to this player when the match completed, if the server granted any at all: a CPU match can be
   // reward-free (CpuOpponent.RewardsForCpuMatches on the server) and a loss pays 0 XP, so the dialog only shows the
   // box when there is something in it.
@@ -922,25 +920,21 @@ export const Match: React.FC = () => {
       <div className="game-layout">
         <Hand
           cards={opponentHand}
-          // The name is a control for a human opponent and plain text for the CPU (PLAN-020): the score beside it is
-          // never clickable, and the CPU branch renders exactly what it rendered before this plan.
+          // The opponent's name is a control that opens their profile (PLAN-020); a bot is a real login too, so it is
+          // just as clickable (plans/PLAN-025-bots/plan.md). The score beside it is never clickable.
           title={
-            isCpuOpponent ? (
-              `${opponentName} - Score: ${opponentScore}`
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="match-opponent-name"
-                  aria-haspopup="dialog"
-                  title={`See ${opponentLogin}'s profile`}
-                  onClick={() => setProfileLogin(opponentLogin)}
-                >
-                  {opponentName}
-                </button>
-                {` - Score: ${opponentScore}`}
-              </>
-            )
+            <>
+              <button
+                type="button"
+                className="match-opponent-name"
+                aria-haspopup="dialog"
+                title={`See ${opponentLogin}'s profile`}
+                onClick={() => opponentLogin && setProfileLogin(opponentLogin)}
+              >
+                {opponentName}
+              </button>
+              {` - Score: ${opponentScore}`}
+            </>
           }
           isOpponent={true}
           className="opponent-hand"
