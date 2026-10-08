@@ -866,9 +866,10 @@ export const Match: React.FC = () => {
       ? { coins: lastRewards.player1Coins, experience: lastRewards.player1Experience }
       : { coins: lastRewards.player2Coins, experience: lastRewards.player2Experience }
     : null;
-  // Handle game over dialog actions
-  const handleReturnHome = () => {
-    navigate('/home');
+  // The game-over exit: the Play page, so the player lands where matchmaking lives rather than on Home
+  // (`plans/PLAN-026-player-search-and-online-page/plan.md` §3.5). The button's label stays "Return to Home".
+  const handleReturnToPlay = () => {
+    navigate('/play');
   };
 
   return (
@@ -1097,7 +1098,7 @@ export const Match: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
           <Button
-            onClick={handleReturnHome}
+            onClick={handleReturnToPlay}
             variant="contained"
             sx={{
               bgcolor: '#4a9eff',

@@ -1,0 +1,144 @@
+/* The operators' online roster (`plans/PLAN-026-player-search-and-online-page/plan.md` §3.4). Its headings, rows and
+   waiting states deliberately echo `Social.scss`, so the roster reads as the same app; the chrome's own offset comes
+   from `.app-chrome-page` (AppChrome.scss). */
+
+.online-roster {
+  align-self: stretch;
+  width: 100%;
+}
+
+.online-roster-container {
+  width: 100%;
+  max-width: 720px;
+}
+
+.online-roster__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .online-roster__title {
+    color: #fff;
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .online-roster__subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+}
+
+.online-roster__refresh {
+  width: min(220px, 100%);
+  margin-bottom: 1.75rem;
+  border-color: #3a3a5e !important;
+  color: #cfe4ff !important;
+
+  &.Mui-disabled {
+    color: rgba(255, 255, 255, 0.45) !important;
+  }
+}
+
+.online-roster__list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+
+  .online-roster__count {
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+}
+
+/* One row: a face, the login, an optional bot tag and the online dot that is the whole point of the page. */
+.online-roster__row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 2px solid #3a3a5e;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  color: #fff;
+}
+
+.online-roster__avatar {
+  width: 40px !important;
+  height: 40px !important;
+  flex-shrink: 0;
+  border: 2px solid #4a9eff;
+  background: #16213e;
+}
+
+.online-roster__avatar-fallback {
+  font-size: 24px;
+}
+
+.online-roster__login {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* A small tag on a bot, so "including bots" is legible rather than implied. */
+.online-roster__bot {
+  flex-shrink: 0;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid #4a9eff;
+  border-radius: 6px;
+  color: #9cd0ff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+/* Every row here is online, so the dot is always lit — it exists to make that glanceable. */
+.online-roster__dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #4eff4a;
+  border: 1px solid #4eff4a;
+  box-shadow: 0 0 6px rgba(78, 255, 74, 0.6);
+}
+
+.online-roster__waiting {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+
+  .online-roster__spinner {
+    color: #4a9eff;
+  }
+}
+
+.online-roster__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 0;
+  text-align: center;
+
+  .online-roster__error-message {
+    color: #ff9494;
+  }
+}
+
+.online-roster__empty {
+  padding: 1.5rem 0;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+}

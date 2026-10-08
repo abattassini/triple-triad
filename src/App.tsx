@@ -10,6 +10,7 @@ import { CardShop } from './pages/CardShop';
 import { MyCards } from './pages/MyCards';
 import { MyPacks } from './pages/MyPacks';
 import { Welcome } from './pages/Welcome';
+import { OnlinePlayers } from './pages/OnlinePlayers';
 import { MatchPage } from './pages/MatchPage';
 import { AccountCreation } from './pages/AccountCreation';
 import { SignIn } from './pages/SignIn';
@@ -60,6 +61,27 @@ function PublicOnlyRoute({
 
   if (isAuthenticated) {
     return <Navigate to={redirectTo} replace />;
+  }
+
+  return <>{children}</>;
+}
+
+// Who may open the operator pages — the online roster (`plans/PLAN-026-player-search-and-online-page/plan.md` §3.4).
+// Matched case-insensitively against the signed-in login, and kept in step with the server's own allowlist
+// (`PlayerController.OperatorLogins`): the redirect here is the UX, the server's 403 is the rule.
+const OPERATOR_LOGINS = ['batta', 'argel'];
+
+// Restricts a route to the operator logins: a signed-in non-operator is sent Home as if the page did not exist for
+// them. It sits inside `AppLayout`, so it only ever sees an authenticated player.
+function PrivilegedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!user || !OPERATOR_LOGINS.includes(user.login.toLowerCase())) {
+    return <Navigate to="/home" replace />;
   }
 
   return <>{children}</>;
@@ -137,6 +159,17 @@ function App() {
             <Route path="/cards" element={<MyCards />} />
             <Route path="/packs" element={<MyPacks />} />
             <Route path="/welcome" element={<Welcome />} />
+            {/* The operators' online roster: no nav entry, reachable only by typing the URL, and only for the
+                operator logins — everyone else is sent Home
+                (plans/PLAN-026-player-search-and-online-page/plan.md §3.4). */}
+            <Route
+              path="/online"
+              element={
+                <PrivilegedRoute>
+                  <OnlinePlayers />
+                </PrivilegedRoute>
+              }
+            />
           </Route>
           {/* The board, deliberately outside the chrome: a duel owns the whole screen. */}
           <Route

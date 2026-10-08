@@ -221,6 +221,29 @@ export interface FriendSummary {
  */
 export const FRIEND_PRESENCE_CHANGED = 'FriendPresenceChanged';
 
+/**
+ * One hit from the Social page's player lookup (`GET api/player/search`,
+ * `plans/PLAN-026-player-search-and-online-page/plan.md` §3.1): enough to draw a result row — the login, a face,
+ * whether it is a bot — and whether it is online right now. Anything more is the profile modal's job when the row is
+ * opened.
+ */
+export interface PlayerSearchResult {
+  login: string;
+  avatarUrl: string | null;
+  isBot: boolean;
+  online: boolean;
+}
+
+/**
+ * One row of the operators' online roster (`GET api/player/online`, §3.2): every entry is online by definition, so
+ * there is no `online` flag here — just who they are and whether they are a bot.
+ */
+export interface OnlinePlayerSummary {
+  login: string;
+  avatarUrl: string | null;
+  isBot: boolean;
+}
+
 export interface SignInRequest {
   identifier: string;
   password: string;
@@ -639,6 +662,32 @@ class ApiService {
     });
     if (!response.ok) {
       throw new Error('Failed to load your friends');
+    }
+    return response.json();
+  }
+
+  // The Social page's player lookup: players whose login contains `query`, case-insensitively, bots included. A query
+  // shorter than the server's minimum answers an empty list without a read, and the caller is never in the answer
+  // (`plans/PLAN-026-player-search-and-online-page/plan.md` §3.1).
+  async searchPlayers(query: string): Promise<{ players: PlayerSearchResult[] }> {
+    const response = await fetch(
+      `${API_BASE_URL}/api/player/search?q=${encodeURIComponent(query)}`,
+      { headers: getAuthHeaders() }
+    );
+    if (!response.ok) {
+      throw new Error('Could not search for players');
+    }
+    return response.json();
+  }
+
+  // Everyone online right now, humans and bots — the operators' roster page. The server refuses anyone outside the
+  // operator allowlist with a 403, whatever the client route guard does (§3.2).
+  async getOnlinePlayers(): Promise<{ players: OnlinePlayerSummary[] }> {
+    const response = await fetch(`${API_BASE_URL}/api/player/online`, {
+      headers: getAuthHeaders(),
+    });
+    if (!response.ok) {
+      throw new Error('Could not load the online roster');
     }
     return response.json();
   }

@@ -30,18 +30,117 @@
   }
 }
 
-/* Search Player: above the friends, as the request asks, and disabled because the action is a future plan. It carries
-   a `title` saying so — a button that is simply dead reads as a bug. Twice its natural width (a plain outlined button
-   is ~150px with this label), capped at the container so a 320px phone does not overflow. */
+/* The player lookup (`plans/PLAN-026-player-search-and-online-page/plan.md` §3.3, §10): a MUI `Autocomplete` used as
+   a lookup. The box and its dropdown are two different DOM trees — the popper is portaled to the body — so the field
+   is styled under `.social-search__field` and the dropdown under the top-level `.social-search__*` classes below. */
 .social-search {
-  width: min(300px, 100%);
-  margin-bottom: 1.75rem;
-  border-color: #3a3a5e !important;
-  color: rgba(255, 255, 255, 0.45) !important;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 1.75rem;
 
-  /* MUI dims a disabled button; this keeps it legible against the page instead of half-faded. */
-  &.Mui-disabled {
-    color: rgba(255, 255, 255, 0.45) !important;
+  &__field {
+    .MuiOutlinedInput-root {
+      background: linear-gradient(145deg, #1a1a2e, #16213e);
+      border-radius: 12px;
+    }
+
+    /* The theme's default fieldset/label colors are unreadable on the dark page; these match the rows and buttons. */
+    .MuiOutlinedInput-notchedOutline {
+      border-color: #3a3a5e;
+    }
+
+    .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline,
+    .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+      border-color: #4a9eff;
+    }
+
+    .MuiInputBase-input {
+      color: #fff;
+    }
+
+    .MuiInputLabel-root {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .MuiInputLabel-root.Mui-focused {
+      color: #4a9eff;
+    }
+
+    .MuiInputAdornment-root,
+    .MuiAutocomplete-popupIndicator,
+    .MuiAutocomplete-clearIndicator {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .MuiCircularProgress-root {
+      color: #4a9eff;
+    }
+  }
+
+  &__error {
+    padding: 0.25rem 0;
+    text-align: center;
+    color: #ff9494;
+  }
+}
+
+/* The dropdown: portaled to the body, so not nested under `.social-search`. It wears the app's panel look, and its
+   rows show a face, a login, an optional BOT tag and the online dot — the same facts a friend row carries. */
+.social-search__paper {
+  color: #fff;
+  background: linear-gradient(145deg, #1a1a2e, #16213e) !important;
+  border: 2px solid #3a3a5e;
+  border-radius: 12px;
+
+  .MuiAutocomplete-noOptions,
+  .MuiAutocomplete-loading {
+    color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+.social-search__option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #fff;
+
+  &-avatar {
+    width: 32px !important;
+    height: 32px !important;
+    flex-shrink: 0;
+    border: 2px solid #4a9eff;
+    background: #16213e;
+  }
+
+  &-avatar-fallback {
+    font-size: 20px;
+  }
+
+  &-login {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  &-dot {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    &--online {
+      background: #4eff4a;
+      border-color: #4eff4a;
+      box-shadow: 0 0 6px rgba(78, 255, 74, 0.6);
+    }
   }
 }
 
