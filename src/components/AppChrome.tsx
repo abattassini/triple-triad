@@ -9,6 +9,7 @@ import { NotificationBell } from './NotificationBell';
 import { NotificationPanel } from './NotificationPanel';
 import { PlayerStats } from './PlayerStats';
 import { avatarUrlFor } from '../data/Avatar';
+import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import './AppChrome.scss';
 
@@ -49,6 +50,9 @@ export const AppChrome: React.FC = () => {
   const handleSignOut = () => {
     setIsProfileOpen(false);
     setIsNotificationsOpen(false);
+    // Give up any pending challenge first (§3.2 #5), while the token is still here to authenticate it: the call is
+    // fire-and-forget, because a sign-out must not wait on the network.
+    void apiService.expireChallenges();
     signOut();
     navigate('/');
   };

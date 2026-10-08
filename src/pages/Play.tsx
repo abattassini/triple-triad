@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Alert, Box, Typography, CircularProgress, Container, Button } from '@mui/material';
 import { FiPlayCircle } from 'react-icons/fi';
 import { ActionTile } from '../components/ActionTile';
@@ -69,6 +69,25 @@ export const Play: React.FC = () => {
     },
     [joinMatch]
   );
+
+  /**
+   * A hand-off from an accepted challenge (plans/PLAN-027-friend-challenge/plan.md §3.9): the match is already `active`
+   * with both seats filled, so this page only has to join its room and open the picker — the same pick → `MatchReady` →
+   * board path Quick Match takes. Consumed once, so cancelling the picker does not reopen it.
+   */
+  const handedOffMatchId = (useLocation().state as { matchId?: number } | null)?.matchId ?? null;
+  const handoffConsumed = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (handedOffMatchId === null || handoffConsumed.current === handedOffMatchId) {
+      return;
+    }
+
+    handoffConsumed.current = handedOffMatchId;
+    void enterRoom(handedOffMatchId);
+    setMatchId(handedOffMatchId);
+    setPhase('picking');
+  }, [handedOffMatchId, enterRoom]);
 
   /** Both hands are filed: join the match's SignalR group and open the board. */
   const openBoard = useCallback(

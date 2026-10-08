@@ -18,6 +18,7 @@ import { RemoveFriendConfirmModal } from '../components/RemoveFriendConfirmModal
 import { avatarUrlFor } from '../data/Avatar';
 import { useFriends } from '../hooks/useFriends';
 import { MIN_SEARCH_LENGTH, usePlayerSearch } from '../hooks/usePlayerSearch';
+import { useChallenges } from '../contexts/ChallengesContext';
 import type { FriendSummary } from '../services/api';
 import './Social.scss';
 
@@ -40,6 +41,8 @@ const byLogin = (a: FriendSummary, b: FriendSummary) =>
  */
 export const Social: React.FC = () => {
   const { friends, isLoading, error, refresh, remove } = useFriends();
+  // Challenging a friend is the provider's business: it owns the wait, the answer and the dialog each opens.
+  const { challenge } = useChallenges();
   // The player lookup (§3.3, §10): the box's text is owned here and the results by the hook. `isLookupDismissed` is the
   // only piece of dropdown state — whether the user closed it (Esc / click-away) — because `isLookupOpen` is derived
   // from it and the query (§13).
@@ -231,7 +234,11 @@ export const Social: React.FC = () => {
           setActionsLogin(null);
           setProfileLogin(login);
         }}
-        onChallenge={() => undefined}
+        onChallenge={login => {
+          // The dialog closes: the wait for an answer has its own modal, owned by `ChallengesProvider` (§3.9).
+          setActionsLogin(null);
+          void challenge(login);
+        }}
         onRemove={login => {
           setActionsLogin(null);
           setRemoveLogin(login);

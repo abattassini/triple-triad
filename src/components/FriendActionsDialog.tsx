@@ -23,7 +23,7 @@ interface FriendActionsDialogProps {
    */
   friend: FriendSummary | null;
   onViewProfile: (login: string) => void;
-  /** Nothing yet: the matchmaking call is a future plan, so the option is inert by design (§5 D6). */
+  /** Sends the invitation; the wait, the answer and the dialogs belong to `ChallengesProvider` (§3.9). */
   onChallenge: (login: string) => void;
   onRemove: (login: string) => void;
   onClose: () => void;
@@ -118,11 +118,7 @@ export const FriendActionsDialog: React.FC<FriendActionsDialogProps> = ({
           disabled={!friend.online}
           onClick={() => onChallenge(friend.login)}
         >
-          <span className="friend-actions__label">
-            Challenge to a match
-            {/* Only the online case needs a line under it: offline, the greyed label is the whole message. */}
-            {friend.online && <span className="friend-actions__hint">Coming in a future plan</span>}
-          </span>
+          <span className="friend-actions__label">Challenge to a match</span>
         </Button>
 
         <Button

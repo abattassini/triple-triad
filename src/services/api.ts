@@ -183,7 +183,13 @@ export interface GameNotification {
    * answered elsewhere stops offering one (§3.4).
    */
   friendshipState: FriendshipState | null;
-  /** The friendship the row is about, for the kinds that have one. */
+  /**
+   * What a **challenge** row means now — `pending` while it is still this player's to answer — and null for the friend
+   * kinds (`plans/PLAN-027-friend-challenge/plan.md` §3.6). Like `friendshipState`, it is what decides whether the row
+   * still offers its buttons.
+   */
+  challengeState: ChallengeState | null;
+  /** The friendship — or, for a challenge, the **match** — the row is about. */
   subjectId: number | null;
   createdAt: string;
   readAt: string | null;
@@ -199,6 +205,12 @@ export interface NotificationsPage {
 export interface FriendshipAnswer {
   login: string;
   friendship: FriendshipState;
+}
+
+/** What a challenge action answers: the match it is about, and that match's status as it now stands. */
+export interface ChallengeAnswer {
+  matchId: number;
+  status: string;
 }
 
 /**
@@ -220,6 +232,20 @@ export interface FriendSummary {
  * offline (`FriendPresenceChanged`, §3.3). Named once here so the listener and the documentation cannot drift.
  */
 export const FRIEND_PRESENCE_CHANGED = 'FriendPresenceChanged';
+
+// The challenge pushes (plans/PLAN-027-friend-challenge/plan.md §3.9): the invited player is told they were challenged
+// (the dialog opens straight away when they are free), and every way the invitation ends is pushed to the other side.
+export const CHALLENGE_RECEIVED = 'ChallengeReceived';
+export const CHALLENGE_ACCEPTED = 'ChallengeAccepted';
+export const CHALLENGE_REFUSED = 'ChallengeRefused';
+export const CHALLENGE_CANCELLED = 'ChallengeCancelled';
+export const CHALLENGE_EXPIRED = 'ChallengeExpired';
+
+/** The notification kind a challenge lands in the inbox as. */
+export const MATCH_CHALLENGE_TYPE = 'match_challenge';
+
+/** What a challenge notification means to its recipient now — the server's stamp, mirrored. */
+export type ChallengeState = 'pending' | 'accepted' | 'refused' | 'expired' | 'gone';
 
 /**
  * One hit from the Social page's player lookup (`GET api/player/search`,
@@ -859,6 +885,54 @@ class ApiService {
     });
     if (!response.ok) {
       throw new Error('Failed to load your collection');
+    }
+    return response.json();
+  }
+
+  // Challenges a friend to a match (plans/PLAN-027-friend-challenge/plan.md §3.4). The server refuses anyone who is not
+  // a friend, anyone offline, and a challenger already in a match — with its sentence in `error`.
+  async challengePlayer(login: string): Promise<ChallengeAnswer> {
+    return this.sendChallengeAction(`${API_BASE_URL}/api/challenges/${encodeURIComponent(login)}`);
+  }
+
+  // Accepts the invitation: the match goes active, and both sides pick their hand.
+  async acceptChallenge(matchId: number): Promise<ChallengeAnswer> {
+    return this.sendChallengeAction(`${API_BASE_URL}/api/challenges/${matchId}/accept`);
+  }
+
+  // Declines it — the match's status becomes `refused`.
+  async refuseChallenge(matchId: number): Promise<ChallengeAnswer> {
+    return this.sendChallengeAction(`${API_BASE_URL}/api/challenges/${matchId}/refuse`);
+  }
+
+  // Withdraws the caller's own outstanding invitation.
+  async cancelChallenge(matchId: number): Promise<ChallengeAnswer> {
+    return this.sendChallengeAction(`${API_BASE_URL}/api/challenges/${matchId}/cancel`);
+  }
+
+  // The sign-out hook (§3.2 #5): ends the caller's pending challenges, so nobody waits on somebody who has left.
+  // Deliberately quiet — a sign-out must not fail because this call did.
+  async expireChallenges(): Promise<void> {
+    try {
+      await fetch(`${API_BASE_URL}/api/challenges/expire`, {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({}),
+      });
+    } catch {
+      // Nothing to do: the twenty-minute window covers whatever this missed.
+    }
+  }
+
+  private async sendChallengeAction(url: string): Promise<ChallengeAnswer> {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({}),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => null);
+      throw new Error(error?.error || 'That challenge action did not work.');
     }
     return response.json();
   }

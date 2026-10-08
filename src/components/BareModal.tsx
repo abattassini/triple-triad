@@ -1,4 +1,13 @@
-import { Box, CircularProgress, Dialog, Fade, Typography, type DialogProps } from '@mui/material';
+import {
+  Box,
+  CircularProgress,
+  Dialog,
+  Fade,
+  IconButton,
+  Typography,
+  type DialogProps,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
 import './BareModal.scss';
 
 interface BareModalProps {
@@ -18,6 +27,12 @@ interface BareModalProps {
   fullWidth?: boolean;
   /** Applied to the content wrapper, so each consumer styles its own innards. */
   className?: string;
+  /**
+   * Renders a close (×) button at the top-right of the content, wired to `onClose`
+   * (`plans/PLAN-027-friend-challenge/plan.md` §3.8). Off by default: only the challenge dialog has asked for it so
+   * far, and a shell that always drew one would put a second way out on dialogs that deliberately have none.
+   */
+  showCloseButton?: boolean;
   /** Accessible name of the dialog. */
   ariaLabel?: string;
   children: React.ReactNode;
@@ -39,6 +54,7 @@ export const BareModal: React.FC<BareModalProps> = ({
   maxWidth = 'sm',
   fullWidth = false,
   className = '',
+  showCloseButton = false,
   ariaLabel,
   children,
 }) => (
@@ -81,7 +97,21 @@ export const BareModal: React.FC<BareModalProps> = ({
       },
     }}
   >
-    <Box className={`bare-modal ${className}`.trim()}>{children}</Box>
+    <Box className={`bare-modal ${className}`.trim()}>
+      {/* The opt-in way out (§3.8). It sits inside the content wrapper so a consumer's own layout is untouched. */}
+      {showCloseButton && (
+        <IconButton
+          className="bare-modal__close"
+          aria-label="Close"
+          size="small"
+          onClick={() => onClose?.()}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      )}
+
+      {children}
+    </Box>
   </Dialog>
 );
 

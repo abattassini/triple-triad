@@ -7,9 +7,11 @@ import {
   apiService,
   FRIEND_ACCEPTED_TYPE,
   FRIEND_REQUEST_TYPE,
+  MATCH_CHALLENGE_TYPE,
   type GameNotification,
 } from '../services/api';
 import { useNotifications } from '../contexts/NotificationsContext';
+import { useChallenges } from '../contexts/ChallengesContext';
 import './NotificationPanel.scss';
 
 interface NotificationPanelProps {
@@ -28,6 +30,8 @@ const describe = (row: GameNotification): string => {
       return `${row.actorLogin} sent you a friend request`;
     case FRIEND_ACCEPTED_TYPE:
       return `${row.actorLogin} accepted your friend request`;
+    case MATCH_CHALLENGE_TYPE:
+      return `${row.actorLogin} challenged you to a match`;
     default:
       return `${row.actorLogin} sent you a notification`;
   }
@@ -57,8 +61,45 @@ const whenLabel = (createdAt: string): string => {
  */
 export const NotificationPanel: React.FC<NotificationPanelProps> = ({ open, onClose }) => {
   const { notifications, unreadCount, isLoading, error, refresh, markAllRead } = useNotifications();
+  // Answering a challenge from here ends in the same place the dialog does: the Play page's picker (§3.9).
+  const { accept } = useChallenges();
   const [busyLogin, setBusyLogin] = useState<string | null>(null);
+  const [busyId, setBusyId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  /**
+   * Accepts a challenge from its row. The panel closes first, because acceptance sends the player to `/play` and this
+   * modal is mounted app-wide — leaving it open would cover the picker it just opened.
+   */
+  const acceptChallenge = async (matchId: number) => {
+    setBusyId(matchId);
+    setActionError(null);
+
+    const accepted = await accept(matchId);
+
+    if (accepted) {
+      onClose();
+    } else {
+      setActionError('That challenge is no longer available.');
+    }
+
+    setBusyId(null);
+  };
+
+  /** Declines it. The row leaves the list on the re-read, because the server stops listing a challenge that is answered. */
+  const refuseChallenge = async (matchId: number) => {
+    setBusyId(matchId);
+    setActionError(null);
+
+    try {
+      await apiService.refuseChallenge(matchId);
+      await refresh();
+    } catch (failure) {
+      setActionError(failure instanceof Error ? failure.message : 'That did not work.');
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   useEffect(() => {
     if (!open) {
@@ -166,6 +207,31 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ open, onCl
                   >
                     {whenLabel(row.createdAt)}
                   </Typography>
+
+                  {/* A challenge is answerable while it is still `pending` — the server's stamp, not the row's age,
+                      decides that, so one answered elsewhere shows no buttons (§3.6). */}
+                  {row.type === MATCH_CHALLENGE_TYPE &&
+                    row.challengeState === 'pending' &&
+                    row.subjectId !== null && (
+                      <Box className="notification-panel__actions">
+                        <Button
+                          size="small"
+                          variant="contained"
+                          disabled={busyId === row.subjectId}
+                          onClick={() => void acceptChallenge(row.subjectId as number)}
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          disabled={busyId === row.subjectId}
+                          onClick={() => void refuseChallenge(row.subjectId as number)}
+                        >
+                          Refuse
+                        </Button>
+                      </Box>
+                    )}
 
                   {/* A request that is still waiting for *this* player — the only kind that offers an action, and the
                       only request the server lists (§3.4). Acting on it takes the row out of the list on the re-read
