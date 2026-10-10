@@ -33,6 +33,15 @@
     }
   }
 
+  /* The rules the match will be played under — a quieter pill than the challenger's line, but impossible to miss. */
+  &__rules {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid #3a3a5e;
+    border-radius: 999px;
+    color: #9ecbff;
+    background: rgba(74, 158, 255, 0.12);
+  }
+
   &__error {
     color: #ff9494;
   }

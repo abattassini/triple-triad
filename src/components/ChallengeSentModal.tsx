@@ -1,11 +1,18 @@
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import { BareModal } from './BareModal';
+import { type MatchRule } from '../services/api';
+import { describeRules } from '../data/MatchRules';
 import './ChallengeSentModal.scss';
 
 interface ChallengeSentModalProps {
   open: boolean;
   /** Who was invited. */
   friend: string;
+  /**
+   * The rules this player chose (`plans/PLAN-028-challenge-rules-and-friend-list/plan.md` §3.5), echoed while they wait
+   * so they can see what they are waiting on; the empty list is a basic match.
+   */
+  rules: MatchRule[];
   /**
    * Set once the invitation ends without being accepted — the server's sentence (declined, expired) or the reason it
    * could not be sent. When it is set the dialog stops waiting and offers a way out.
@@ -28,6 +35,7 @@ interface ChallengeSentModalProps {
 export const ChallengeSentModal: React.FC<ChallengeSentModalProps> = ({
   open,
   friend,
+  rules,
   message = null,
   isCancelling = false,
   onCancel,
@@ -60,6 +68,12 @@ export const ChallengeSentModal: React.FC<ChallengeSentModalProps> = ({
             </Typography>
             <Typography variant="body2" className="challenge-sent__line">
               Waiting for <strong>{friend}</strong> to accept…
+            </Typography>
+            {/* What the challenger is waiting on, so they can confirm the choice they made (§3.5). */}
+            <Typography variant="body2" className="challenge-sent__rules">
+              {rules.length > 0
+                ? `Rules: ${describeRules(rules)}`
+                : 'Basic Match — no special rules'}
             </Typography>
             <Button variant="text" color="inherit" disabled={isCancelling} onClick={onCancel}>
               Cancel challenge

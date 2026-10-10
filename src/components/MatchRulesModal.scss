@@ -1,0 +1,119 @@
+/* The rule choice (plans/PLAN-028-challenge-rules-and-friend-list/plan.md §3.3), rendered inside the shared
+   `BareModal`, which supplies the darkened shell and the missing surface; everything here is the modal's own content.
+   These styles came from `Play.scss` when the modal was extracted, so both callers keep the same look. The two options
+   stay deliberately modest and always stacked (never side by side), so the room goes into the heading and the rhythm
+   rather than into the buttons. */
+.match-rules-modal {
+  max-width: 26rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 1.75rem;
+  text-align: center;
+  color: #fff;
+
+  &__title {
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
+    margin-bottom: 1.25rem;
+  }
+
+  &__hint {
+    color: rgba(255, 255, 255, 0.75);
+    margin: 0 0 2.75rem;
+  }
+
+  /* One below the other at every width: the options never sit in a row. */
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  /* Both options are two-line buttons: the label with its rules underneath. */
+  &__option {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.2rem;
+    min-height: 4.5rem;
+    padding: 0.75rem 1rem;
+    border-color: #4a9eff !important;
+    color: #4a9eff !important;
+
+    &:hover {
+      background: rgba(74, 158, 255, 0.12);
+    }
+
+    &--rules {
+      background-color: #4a9eff !important;
+      color: #fff !important;
+
+      &:hover {
+        background-color: #3a8eef !important;
+      }
+    }
+  }
+
+  &__option-label {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+
+  &__option-caption {
+    display: block;
+    font-size: 0.8rem;
+    line-height: 1.35;
+    opacity: 0.85;
+  }
+
+  &__cancel {
+    margin-top: 2rem;
+    color: rgba(255, 255, 255, 0.6) !important;
+  }
+}
+
+/* Desktop and up: the heading grows and the rhythm opens up, while the options keep
+   their modest size and stay one below the other. */
+@media (min-width: 600px) {
+  .match-rules-modal {
+    padding: 2.5rem 2rem 3rem;
+
+    &__title {
+      font-size: 2.25rem;
+      margin-bottom: 1.75rem;
+    }
+
+    &__hint {
+      margin-bottom: 4rem;
+    }
+
+    &__options {
+      gap: 1.75rem;
+    }
+
+    &__option {
+      min-height: 4.75rem;
+      padding: 0.9rem 1.25rem;
+    }
+
+    &__option-label {
+      font-size: 1.2rem;
+    }
+
+    &__option-caption {
+      font-size: 0.85rem;
+    }
+
+    &__cancel {
+      margin-top: 3.5rem;
+    }
+  }
+}
+
+/* Phones: tighter gutters, because the dialog runs edge to edge below the sm breakpoint. */
+@media (max-width: 599px) {
+  .match-rules-modal {
+    padding: 1.25rem 0.75rem 1.5rem;
+  }
+}

@@ -1,12 +1,19 @@
 import { Box, Button, CircularProgress, Typography } from '@mui/material';
 import { FiPlayCircle } from 'react-icons/fi';
 import { BareModal } from './BareModal';
+import { type MatchRule } from '../services/api';
+import { describeRules } from '../data/MatchRules';
 import './ChallengeModal.scss';
 
 interface ChallengeModalProps {
   open: boolean;
   /** Who invited the player. */
   challenger: string;
+  /**
+   * The rules the challenger chose (`plans/PLAN-028-challenge-rules-and-friend-list/plan.md` §3.5): the empty list is a
+   * basic match, otherwise the dialog names them so the player knows what they are agreeing to before they answer.
+   */
+  rules: MatchRule[];
   /** True while the answer is in flight. */
   isAnswering?: boolean;
   /** The server's sentence when an answer was refused (a challenge that expired while the dialog was open). */
@@ -28,6 +35,7 @@ interface ChallengeModalProps {
 export const ChallengeModal: React.FC<ChallengeModalProps> = ({
   open,
   challenger,
+  rules,
   isAnswering = false,
   error = null,
   onAccept,
@@ -56,6 +64,11 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
         </Typography>
         <Typography variant="body1" className="challenge-modal__line">
           <strong>{challenger}</strong> challenged you to a match.
+        </Typography>
+
+        {/* What the match will be played under, before the player answers (plans/PLAN-028 §3.5). */}
+        <Typography variant="body2" className="challenge-modal__rules">
+          {rules.length > 0 ? `Rules: ${describeRules(rules)}` : 'Basic Match — no special rules'}
         </Typography>
 
         {error && (

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Alert, Box, Typography, CircularProgress, Container, Button } from '@mui/material';
-import { FiPlayCircle } from 'react-icons/fi';
+import { FiPlayCircle, FiUsers } from 'react-icons/fi';
 import { ActionTile } from '../components/ActionTile';
 import { BareModal, BareModalLoading } from '../components/BareModal';
+import { FriendsList } from '../components/FriendsList';
+import { MatchRulesModal } from '../components/MatchRulesModal';
 import { SelectHandModal } from '../components/SelectHandModal';
-import { apiService, ALL_MATCH_RULES, type MatchRule } from '../services/api';
+import { apiService, type MatchRule } from '../services/api';
+import { describeRules } from '../data/MatchRules';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
 import './Play.scss';
@@ -39,6 +42,8 @@ export const Play: React.FC = () => {
   const [searchingRules, setSearchingRules] = useState<MatchRule[]>([]);
   // Whether the "how do you want to play?" modal is open.
   const [isChoosingRules, setIsChoosingRules] = useState(false);
+  // Whether the "Challenge a Friend" friend list is open.
+  const [isChoosingFriend, setIsChoosingFriend] = useState(false);
   // Why the picker is still on screen: the server rejected the list we sent.
   const [pickError, setPickError] = useState<string | null>(null);
   // True while the commit call (join, or filing the hand) is in flight.
@@ -386,7 +391,7 @@ export const Play: React.FC = () => {
                 </Typography>
                 <Typography variant="body2" className="play-searching__rules">
                   {searchingRules.length > 0
-                    ? `Rules: ${searchingRules.map(rule => rule.toUpperCase()).join(' · ')}`
+                    ? `Rules: ${describeRules(searchingRules)}`
                     : 'No special rules'}
                 </Typography>
                 <Button
@@ -400,64 +405,47 @@ export const Play: React.FC = () => {
               </Box>
             ) : undefined}
           </ActionTile>
+
+          {/* Straight into the friends list (§3.4): the same component Social renders, so a challenge behaves
+              identically from either page. Disabled while a Quick Match flow is in progress, like the tile above. */}
+          <ActionTile
+            icon={<FiUsers />}
+            title="Challenge a Friend"
+            caption="Invite one of your friends to a match"
+            actionLabel="Challenge a Friend"
+            onAction={() => setIsChoosingFriend(true)}
+            actionDisabled={!isConnected || phase !== 'idle' || isStarting}
+          />
         </Box>
       </Container>
 
-      <BareModal
+      {/* The Quick Match rule choice — the shared modal the challenge flow opens too (§3.3). */}
+      <MatchRulesModal
         open={isChoosingRules}
+        title="Quick Match"
+        ariaLabel="Quick Match options"
+        onChoose={startMatch}
         onClose={() => setIsChoosingRules(false)}
-        // Full width up to the dialog's cap: without it MUI shrink-wraps the paper to its content, which
-        // left the modal a narrow column in the middle of a desktop screen. Play.scss keeps the content a
-        // modest centred column (the two options stay stacked), so `sm` is all the room it needs.
+      />
+
+      {/* The friend list, on demand: *Challenge a Friend* opens it, a friend's action sheet opens over it, and the
+          rule choice that sheet hands off to replaces it (`onChallengeStarted`), so the dialogs never pile up. */}
+      <BareModal
+        open={isChoosingFriend}
+        onClose={() => setIsChoosingFriend(false)}
         fullWidth
         maxWidth="sm"
-        className="play-rules-modal"
-        ariaLabel="Quick Match options"
+        className="play-challenge"
+        ariaLabel="Challenge a friend"
       >
-        <Typography variant="h5" className="play-rules-modal__title">
-          <FiPlayCircle className="page-title-icon" aria-hidden="true" />
-          Quick Match
+        <Typography variant="h5" className="play-challenge__title">
+          <FiUsers className="page-title-icon" aria-hidden="true" />
+          Challenge a Friend
         </Typography>
-        <Typography variant="body2" className="play-rules-modal__hint">
-          Pick how you want to play
+        <Typography variant="body2" className="play-challenge__hint">
+          Pick a friend to invite
         </Typography>
-
-        <Box className="play-rules-modal__options">
-          <Button
-            autoFocus
-            variant="outlined"
-            size="large"
-            fullWidth
-            className="play-rules-modal__option"
-            onClick={() => startMatch([])}
-          >
-            <span className="play-rules-modal__option-label">Basic Match</span>
-            <span className="play-rules-modal__option-caption">No special rules</span>
-          </Button>
-
-          {/* The caption is rendered from the constant, so a fifth rule needs no change here. */}
-          <Button
-            variant="contained"
-            size="large"
-            fullWidth
-            className="play-rules-modal__option play-rules-modal__option--rules"
-            onClick={() => startMatch(ALL_MATCH_RULES)}
-          >
-            <span className="play-rules-modal__option-label">Match with Rules</span>
-            <span className="play-rules-modal__option-caption">
-              {ALL_MATCH_RULES.map(rule => rule.toUpperCase()).join(' · ')}
-            </span>
-          </Button>
-        </Box>
-
-        <Button
-          variant="text"
-          color="inherit"
-          className="play-rules-modal__cancel"
-          onClick={() => setIsChoosingRules(false)}
-        >
-          Cancel
-        </Button>
+        <FriendsList onChallengeStarted={() => setIsChoosingFriend(false)} />
       </BareModal>
 
       {/* From the option click until the picker is on screen: the choice has been made and the create/join (plus the

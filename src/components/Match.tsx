@@ -49,6 +49,7 @@ import {
   type MatchRewards,
   type MatchRule,
 } from '../services/api';
+import { ruleLabel } from '../data/MatchRules';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from '../contexts/AuthContext';
 import './Match.scss';
@@ -79,16 +80,8 @@ const convertApiCardToLocalCard = (
   return result;
 };
 
-// Read-only labels for the special rules a match can enable (backend MatchRule names).
-const RULE_LABELS: Partial<Record<MatchRule, string>> = {
-  Same: 'SAME',
-  Plus: 'PLUS',
-  SameWall: 'SAME WALL',
-  PlusWall: 'PLUS WALL',
-};
-
-// Unknown rule names fall back to their upper-cased name so new backend rules still show up.
-const ruleLabel = (rule: string): string => RULE_LABELS[rule as MatchRule] ?? rule.toUpperCase();
+// Read-only labels for the special rules a match can enable live in `src/data/MatchRules.ts`, so the board's chips,
+// the Play rule choice and the challenge dialogs cannot drift apart (plans/PLAN-028-challenge-rules-and-friend-list).
 
 /**
  * How often the board reads the match while the **opponent** is on turn, when no push has arrived (see

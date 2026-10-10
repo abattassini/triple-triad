@@ -27,6 +27,15 @@
     }
   }
 
+  /* What the challenger is waiting on (plans/PLAN-028 §3.5) — the same pill the invitation shows the other side. */
+  &__rules {
+    padding: 0.35rem 0.75rem;
+    border: 1px solid #3a3a5e;
+    border-radius: 999px;
+    color: #9ecbff;
+    background: rgba(74, 158, 255, 0.12);
+  }
+
   &__spinner {
     color: #4a9eff !important;
   }

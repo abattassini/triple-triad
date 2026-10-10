@@ -2,12 +2,14 @@ import { createContext, useContext } from 'react';
 
 export interface ChallengesContextValue {
   /**
-   * Invites a friend (plans/PLAN-027-friend-challenge/plan.md §3.9). On success the "waiting for them to accept"
-   * dialog opens; on a refusal the same dialog explains why.
+   * Begins inviting a friend (`plans/PLAN-027-friend-challenge/plan.md` §3.9,
+   * `plans/PLAN-028-challenge-rules-and-friend-list/plan.md` §3.3): it opens the rule choice, and the call itself is
+   * made once a rule set is picked. On success the "waiting for them to accept" dialog opens; on a refusal the same
+   * dialog explains why.
    */
-  challenge: (login: string) => Promise<void>;
+  challenge: (login: string) => void;
 
-  /** True while that call is in flight, so the caller's button can say so. */
+  /** True while the send call is in flight, so a caller's button can say so. */
   isChallenging: boolean;
 
   /**

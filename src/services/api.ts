@@ -214,6 +214,17 @@ export interface ChallengeAnswer {
 }
 
 /**
+ * The `ChallengeReceived` push (plans/PLAN-028-challenge-rules-and-friend-list/plan.md §3.2): who invited the player,
+ * which match answers it, and the rules they chose — so the dialog can name the game before it is accepted. `rules` is
+ * the same set of names the match carries; an empty array is a basic match.
+ */
+export interface ChallengeReceivedPayload {
+  matchId: number;
+  challenger: string;
+  rules: MatchRule[];
+}
+
+/**
  * One friend, as the list draws them (`plans/PLAN-023-social-friends-list/plan.md` §3.2): the other player's login and
  * avatar, and whether they are online **right now** — which the server answers from its own live connections, so it
  * means "has the app open", not "has been seen recently".
@@ -889,10 +900,15 @@ class ApiService {
     return response.json();
   }
 
-  // Challenges a friend to a match (plans/PLAN-027-friend-challenge/plan.md §3.4). The server refuses anyone who is not
-  // a friend, anyone offline, and a challenger already in a match — with its sentence in `error`.
-  async challengePlayer(login: string): Promise<ChallengeAnswer> {
-    return this.sendChallengeAction(`${API_BASE_URL}/api/challenges/${encodeURIComponent(login)}`);
+  // Challenges a friend to a match (plans/PLAN-027-friend-challenge/plan.md §3.4,
+  // plans/PLAN-028-challenge-rules-and-friend-list/plan.md §3.2). `rules` is the challenger's choice — `[]` for a
+  // *Basic Match*, `ALL_MATCH_RULES` for a *Match with Rules* — and it is stored on the challenge, so the accepted game
+  // plays under it. The server refuses anyone who is not a friend, anyone offline, and a challenger already in a match
+  // — with its sentence in `error`.
+  async challengePlayer(login: string, rules: MatchRule[]): Promise<ChallengeAnswer> {
+    return this.sendChallengeAction(`${API_BASE_URL}/api/challenges/${encodeURIComponent(login)}`, {
+      rules,
+    });
   }
 
   // Accepts the invitation: the match goes active, and both sides pick their hand.
@@ -924,11 +940,14 @@ class ApiService {
     }
   }
 
-  private async sendChallengeAction(url: string): Promise<ChallengeAnswer> {
+  private async sendChallengeAction(
+    url: string,
+    body: Record<string, unknown> = {}
+  ): Promise<ChallengeAnswer> {
     const response = await fetch(url, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({}),
+      body: JSON.stringify(body),
     });
     if (!response.ok) {
       const error = await response.json().catch(() => null);

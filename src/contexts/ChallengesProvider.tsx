@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   apiService,
   CHALLENGE_ACCEPTED,
@@ -7,17 +7,22 @@ import {
   CHALLENGE_EXPIRED,
   CHALLENGE_RECEIVED,
   CHALLENGE_REFUSED,
+  type ChallengeReceivedPayload,
+  type MatchRule,
 } from '../services/api';
 import { useSignalR } from '../hooks/useSignalR';
 import { useAuth } from './AuthContext';
 import { ChallengeModal } from '../components/ChallengeModal';
 import { ChallengeSentModal } from '../components/ChallengeSentModal';
+import { MatchRulesModal } from '../components/MatchRulesModal';
 import { ChallengesContext, type ChallengesContextValue } from './ChallengesContext';
 
 /** The invitation the player is being asked to answer. */
 interface IncomingChallenge {
   matchId: number;
   challenger: string;
+  /** The rules the challenger chose; empty is a basic match (plans/PLAN-028 §3.2). */
+  rules: MatchRule[];
 }
 
 /** The invitation the player has sent and is waiting on. */
@@ -25,6 +30,8 @@ interface OutgoingChallenge {
   login: string;
   /** Null when it could not be sent at all — the dialog then shows the reason instead of waiting. */
   matchId: number | null;
+  /** The rules this player chose, echoed while they wait (§3.5). */
+  rules: MatchRule[];
 }
 
 /**
@@ -35,16 +42,29 @@ interface OutgoingChallenge {
  * Both halves of a challenge are here — the one being answered and the one being waited on — because they are one
  * conversation seen from two sides, and the pushes that move them are addressed to one player's own connections.
  *
+ * An invitation now carries a **rule choice** in front of it
+ * (`plans/PLAN-028-challenge-rules-and-friend-list/plan.md` §3.3): `challenge(login)` opens the shared rule modal, and
+ * `sendChallenge` calls the server once rules are picked. The same modal is what Play's Quick Match opens, so the two
+ * flows offer the same two options.
+ *
  * Acceptance ends in **one** place: `navigate('/play', { state: { matchId } })`. The Play page already owns the pick →
- * `MatchReady` → board flow, so a challenge reuses it rather than growing a second one.
+ * `MatchReady` → board flow, so a challenge reuses it rather than growing a second one. The invitation dialog is the
+ * one thing that does **not** appear on every page: it is suppressed on the board (§3.5).
  */
 export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { isConnected, on, off, reconnectCount } = useSignalR();
+
+  // The board must never be interrupted: the invitation dialog is suppressed on `/match/*`, and the bell carries the
+  // invitation until the player leaves the board (plans/PLAN-028-challenge-rules-and-friend-list/plan.md §3.5).
+  const isOnMatchPage = location.pathname.startsWith('/match/');
 
   const [incoming, setIncoming] = useState<IncomingChallenge | null>(null);
   const [outgoing, setOutgoing] = useState<OutgoingChallenge | null>(null);
+  // Who is being invited, while the rule choice is on screen; null when there is no choice to make (§3.3).
+  const [pendingChallengeLogin, setPendingChallengeLogin] = useState<string | null>(null);
   const [outgoingMessage, setOutgoingMessage] = useState<string | null>(null);
   const [isAnswering, setIsAnswering] = useState(false);
   const [isChallenging, setIsChallenging] = useState(false);
@@ -71,16 +91,25 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     [navigate]
   );
 
-  /** Invites a friend. The outcome is the "waiting" dialog either way — it explains a refusal where one happened. */
-  const challenge = useCallback(async (login: string) => {
+  /** Begins an invitation: the rule choice opens, and `sendChallenge` finishes it once rules are picked (§3.3). */
+  const challenge = useCallback((login: string) => {
+    setPendingChallengeLogin(login);
+  }, []);
+
+  /**
+   * Sends the invitation with the chosen rules. The outcome is the "waiting" dialog either way — it explains a refusal
+   * where one happened.
+   */
+  const sendChallenge = useCallback(async (login: string, rules: MatchRule[]) => {
+    setPendingChallengeLogin(null);
     setIsChallenging(true);
     setOutgoingMessage(null);
 
     try {
-      const answer = await apiService.challengePlayer(login);
-      setOutgoing({ login, matchId: answer.matchId });
+      const answer = await apiService.challengePlayer(login, rules);
+      setOutgoing({ login, matchId: answer.matchId, rules });
     } catch (failure) {
-      setOutgoing({ login, matchId: null });
+      setOutgoing({ login, matchId: null, rules });
       setOutgoingMessage(
         failure instanceof Error ? failure.message : 'That challenge could not be sent.'
       );
@@ -151,6 +180,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!loading && !isAuthenticated) {
       setIncoming(null);
       setOutgoing(null);
+      setPendingChallengeLogin(null);
       setOutgoingMessage(null);
       setIncomingError(null);
     }
@@ -164,13 +194,18 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
 
     const handleReceived = (...args: unknown[]) => {
-      const data = args[0] as { matchId?: number; challenger?: string } | undefined;
+      const data = args[0] as Partial<ChallengeReceivedPayload> | undefined;
       if (typeof data?.matchId !== 'number' || typeof data?.challenger !== 'string') {
         return;
       }
 
       setIncomingError(null);
-      setIncoming({ matchId: data.matchId, challenger: data.challenger });
+      setIncoming({
+        matchId: data.matchId,
+        challenger: data.challenger,
+        // A server that did not send rules reads as a basic match rather than breaking the dialog.
+        rules: data.rules ?? [],
+      });
     };
 
     const handleAccepted = (...args: unknown[]) => {
@@ -242,9 +277,24 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     <ChallengesContext.Provider value={value}>
       {children}
 
+      {/* The rule choice precedes the send (§3.3): the shared modal Quick Match opens, titled for the friend invited. */}
+      <MatchRulesModal
+        open={pendingChallengeLogin !== null}
+        title={pendingChallengeLogin ? `Challenge ${pendingChallengeLogin}` : 'Challenge'}
+        ariaLabel={`Challenge ${pendingChallengeLogin ?? 'a friend'} to a match`}
+        onChoose={rules => {
+          if (pendingChallengeLogin) {
+            void sendChallenge(pendingChallengeLogin, rules);
+          }
+        }}
+        onClose={() => setPendingChallengeLogin(null)}
+      />
+
+      {/* Suppressed on the board (§3.5): a duel is never interrupted, and the bell still carries the invitation. */}
       <ChallengeModal
-        open={incoming !== null}
+        open={incoming !== null && !isOnMatchPage}
         challenger={incoming?.challenger ?? ''}
+        rules={incoming?.rules ?? []}
         isAnswering={isAnswering}
         error={incomingError}
         onAccept={() => incoming && void accept(incoming.matchId)}
@@ -259,6 +309,7 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       <ChallengeSentModal
         open={outgoing !== null}
         friend={outgoing?.login ?? ''}
+        rules={outgoing?.rules ?? []}
         message={outgoingMessage}
         isCancelling={isCancelling}
         onCancel={() => void cancelOutgoing()}
