@@ -6,7 +6,9 @@ import { ActionTile } from '../components/ActionTile';
 import { BareModal, BareModalLoading } from '../components/BareModal';
 import { FriendsList } from '../components/FriendsList';
 import { MatchRulesModal } from '../components/MatchRulesModal';
+import { NotEnoughCardsNotice } from '../components/NotEnoughCardsNotice';
 import { SelectHandModal } from '../components/SelectHandModal';
+import { canPlay } from '../data/PlayEligibility';
 import { apiService, type MatchRule } from '../services/api';
 import { describeRules } from '../data/MatchRules';
 import { useSignalR } from '../hooks/useSignalR';
@@ -50,6 +52,16 @@ export const Play: React.FC = () => {
   const [isConfirming, setIsConfirming] = useState(false);
   // A dead end (a timeout, a failed call) explained above the tiles.
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  // Why nothing can be started yet: the collection is smaller than a hand
+  // (plans/PLAN-030-minimum-cards-and-board-menu/plan.md). Cleared as soon as it is big enough again, so coming back
+  // from My Packs with cards to spare does not leave the refusal on screen.
+  const [needsCards, setNeedsCards] = useState(false);
+
+  useEffect(() => {
+    if (canPlay(user?.cardsOwned)) {
+      setNeedsCards(false);
+    }
+  }, [user?.cardsOwned]);
 
   useEffect(() => {
     if (!login) {
@@ -252,6 +264,19 @@ export const Play: React.FC = () => {
    * of them are sent to the picker, and each files their five through `POST match/{id}/hand` — which is also what
    * makes the match ready and opens the board.
    */
+  /**
+   * Quick Match is a way into a match, so the collection is checked before the rule choice even opens: a player who
+   * cannot field a hand is told why — and where the packs are — instead of being walked to a match they cannot play.
+   */
+  const beginQuickMatch = () => {
+    if (!canPlay(user?.cardsOwned)) {
+      setNeedsCards(true);
+      return;
+    }
+
+    setIsChoosingRules(true);
+  };
+
   const startMatch = async (rules: MatchRule[]) => {
     if (!login || !isConnected) {
       alert('Please wait for connection...');
@@ -372,6 +397,8 @@ export const Play: React.FC = () => {
           </Alert>
         )}
 
+        {needsCards && <NotEnoughCardsNotice onClose={() => setNeedsCards(false)} />}
+
         <Box className="action-tiles">
           {/* The button is the tile's own (the component renders it); while searching, the body is that whole state
               instead. The picker and the waiting panel live in their own modal, which blocks the page behind them. */}
@@ -380,7 +407,7 @@ export const Play: React.FC = () => {
             title="Quick Match"
             caption="Find a random opponent"
             actionLabel="Quick Match"
-            onAction={() => setIsChoosingRules(true)}
+            onAction={beginQuickMatch}
             actionDisabled={!isConnected || phase !== 'idle' || isStarting}
           >
             {phase === 'searching' ? (

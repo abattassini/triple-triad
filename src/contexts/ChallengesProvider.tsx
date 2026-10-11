@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { Box } from '@mui/material';
 import {
   apiService,
   CHALLENGE_ACCEPTED,
@@ -15,6 +16,8 @@ import { useAuth } from './AuthContext';
 import { ChallengeModal } from '../components/ChallengeModal';
 import { ChallengeSentModal } from '../components/ChallengeSentModal';
 import { MatchRulesModal } from '../components/MatchRulesModal';
+import { NotEnoughCardsNotice } from '../components/NotEnoughCardsNotice';
+import { canPlay } from '../data/PlayEligibility';
 import { ChallengesContext, type ChallengesContextValue } from './ChallengesContext';
 
 /** The invitation the player is being asked to answer. */
@@ -52,7 +55,7 @@ interface OutgoingChallenge {
  * one thing that does **not** appear on every page: it is suppressed on the board (§3.5).
  */
 export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { isConnected, on, off, reconnectCount } = useSignalR();
@@ -70,6 +73,9 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [isChallenging, setIsChallenging] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [incomingError, setIncomingError] = useState<string | null>(null);
+  // Why an invitation cannot be sent: the collection is smaller than a hand
+  // (plans/PLAN-030-minimum-cards-and-board-menu/plan.md).
+  const [needsCards, setNeedsCards] = useState(false);
 
   // The pushes arrive as callbacks that must read the *current* pair, not the one from the render that installed them.
   const incomingRef = useRef<IncomingChallenge | null>(null);
@@ -92,9 +98,20 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 
   /** Begins an invitation: the rule choice opens, and `sendChallenge` finishes it once rules are picked (§3.3). */
-  const challenge = useCallback((login: string) => {
-    setPendingChallengeLogin(login);
-  }, []);
+  const challenge = useCallback(
+    (login: string) => {
+      // An invitation is a way into a match for whoever sends it, so the same collection rule applies here. This is the
+      // one choke point every "Challenge to a match" click passes through, from Play and Social alike
+      // (plans/PLAN-030-minimum-cards-and-board-menu/plan.md), so the refusal is decided once for both.
+      if (!canPlay(user?.cardsOwned)) {
+        setNeedsCards(true);
+        return;
+      }
+
+      setPendingChallengeLogin(login);
+    },
+    [user?.cardsOwned]
+  );
 
   /**
    * Sends the invitation with the chosen rules. The outcome is the "waiting" dialog either way — it explains a refusal
@@ -276,6 +293,24 @@ export const ChallengesProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   return (
     <ChallengesContext.Provider value={value}>
       {children}
+
+      {/* A challenge is a way into a match for the sender too, so a short collection is answered here rather than in a
+          page: the friend sheet has just closed underneath, and this notice is pinned above the dialogs' layer (1300)
+          so it cannot be hidden by one. */}
+      {needsCards && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 80,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1400,
+            width: 'min(520px, calc(100vw - 32px))',
+          }}
+        >
+          <NotEnoughCardsNotice onClose={() => setNeedsCards(false)} />
+        </Box>
+      )}
 
       {/* The rule choice precedes the send (§3.3): the shared modal Quick Match opens, titled for the friend invited. */}
       <MatchRulesModal

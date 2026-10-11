@@ -31,7 +31,8 @@ const NAV_ITEMS = [
  * swallows its clicks exactly like the rest of the page — the modal never has to know the chrome exists.
  *
  * Tapping the identity opens the player's own profile in a `BareModal` (the shared `PlayerStats` card), which is also
- * where Sign Out lives: these pages no longer mount the hamburger drawer that used to own it.
+ * where Sign Out lives — there is no hamburger drawer anywhere in the app to hold it
+ * (`plans/PLAN-030-minimum-cards-and-board-menu/plan.md`).
  *
  * The header's **third column** holds the notifications bell — the one place in the app a player learns somebody asked
  * to be their friend (`plans/PLAN-022-notifications-and-friends/plan.md` §5 D5). It is the column that was empty, so

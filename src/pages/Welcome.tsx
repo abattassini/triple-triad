@@ -12,9 +12,10 @@ import './Welcome.scss';
  * then hands the player the pack panel straight away, so the first thing they do is open one. That panel is the
  * shared `PackOpener`, the very component My Packs renders, so both pages open packs in exactly the same way.
  *
- * It deliberately renders no `PlayerStats` and mounts no hamburger menu (the drawer header carries the compact
- * stats, so adding it here would put stats on this page too). Nothing links to the route either: it is the
- * one-shot onboarding step of a brand-new account, and the packs stay reachable through the packs pill afterwards.
+ * It deliberately renders no `PlayerStats`: the packs are the whole point of the page, and the stats card lives in the
+ * chrome's own profile modal (`plans/PLAN-030-minimum-cards-and-board-menu/plan.md` removed the last drawer that used
+ * to carry a compact copy of it). Nothing links to the route either: it is the one-shot onboarding step of a
+ * brand-new account, and the packs stay reachable through the packs pill afterwards.
  */
 export const Welcome: React.FC = () => {
   const navigate = useNavigate();
